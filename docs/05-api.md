@@ -1,4 +1,4 @@
-# 05 — API REST
+# 05 - Documentation API REST
 
 > Documentation OpenAPI 3.1 générée automatiquement depuis le code backend via **Scramble** (`dedoc/scramble`). Couvre
 > la compétence RNCP **C2.4.1**.
@@ -19,7 +19,7 @@ domaine fonctionnel avec un **« Try it »** pour tester chaque appel.
 
 ### En production
 
-L'accès est restreint par défaut (middleware `RestrictedDocsAccess` de Scramble) — la doc n'est pas exposée
+L'accès est restreint par défaut (middleware `RestrictedDocsAccess` de Scramble) - la doc n'est pas exposée
 publiquement. Pour la consulter en prod :
 
 1. Soit en activant l'env local sur le VPS le temps d'une session (déconseillé).
@@ -43,11 +43,11 @@ php artisan scramble:export
 
 Caractéristiques :
 
-- **Format** — OpenAPI 3.1
-- **Endpoints documentés** — 39 opérations sur 32 paths
-- **Sécurité globale** — Bearer Sanctum
-- **Tags** — Authentification, Catalogue, Panier, Customisation, IA, Commandes, Paiement, Contact, Admin — Produits,
-  Admin — Commandes, Admin — Stock, Public
+- **Format** - OpenAPI 3.1
+- **Endpoints documentés** - 39 opérations sur 32 paths
+- **Sécurité globale** - Bearer Sanctum
+- **Tags** - Authentification, Catalogue, Panier, Customisation, IA, Commandes, Paiement, Contact, Admin - Produits,
+  Admin - Commandes, Admin - Stock, Public
 
 ---
 
@@ -105,9 +105,9 @@ curl -X POST https://api.gauthierfitness.fr/api/logout \
 
 JSON, content-type `application/json`, structure dépendant de l'endpoint :
 
-- **Ressource simple** — objet sérialisé via API Resource
-- **Collection paginée** — wrapper `{ data: [...], links: {...}, meta: {...} }` (format Laravel par défaut)
-- **Création** — code 201, ressource créée
+- **Ressource simple** - objet sérialisé via API Resource
+- **Collection paginée** - wrapper `{ data: [...], links: {...}, meta: {...} }` (format Laravel par défaut)
+- **Création** - code 201, ressource créée
 
 ### Erreurs
 
@@ -131,7 +131,9 @@ JSON, content-type `application/json`, structure dépendant de l'endpoint :
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    // En dev, VITE_API_URL est vide → axios tape /api en relatif, le proxy Vite redirige vers Laravel.
+    // En staging/prod, VITE_API_URL = "https://api.gauthierfitness.fr/api".
+    baseURL: import.meta.env.VITE_API_URL || '/api',
     headers: {Accept: 'application/json'},
 });
 
@@ -164,7 +166,7 @@ const {data} = await api.post('/payment/intent', {
 
 ### Recevoir un webhook Stripe (côté backend, PHP)
 
-L'API expose `POST /api/stripe/webhook` — non documenté ici car il s'agit d'un endpoint serveur-à-serveur appelé par
+L'API expose `POST /api/stripe/webhook` - non documenté ici car il s'agit d'un endpoint serveur-à-serveur appelé par
 Stripe avec une signature HMAC. Voir [
 `StripeController::webhook`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/app/Http/Controllers/StripeController.php)
 pour le détail de la vérification (`Webhook::constructEvent`).
@@ -194,7 +196,7 @@ pendant 6 mois.
 
 ## 7. Quand mettre à jour la doc ?
 
-La doc est **générée du code** — il n'y a rien à maintenir à la main pour la structure des endpoints. En revanche, il
+La doc est **générée du code** - il n'y a rien à maintenir à la main pour la structure des endpoints. En revanche, il
 faut **mettre à jour les annotations PHPDoc** des controllers à chaque fois que :
 
 - Un endpoint est ajouté / supprimé

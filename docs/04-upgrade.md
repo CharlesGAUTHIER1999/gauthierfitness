@@ -1,4 +1,4 @@
-# 04 — Manuel de mise à jour
+# 04 - Manuel de mise à jour
 
 > Procédure pour publier une nouvelle version de GauthierFitness en production, gérer les migrations DB, mettre à jour
 > les dépendances et exécuter un rollback si nécessaire. Couvre les compétences RNCP **C2.4.1** (documentation) et *
@@ -76,14 +76,14 @@ Ajouter une section en haut de `CHANGELOG.md` (à créer s'il n'existe pas) :
 - Mots de passe MySQL sortis du docker-compose.yml (GF23)
 ```
 
-### Étape 4 — PR develop → main
+### Étape 4 - PR develop → main
 
 1. Ouvrir une PR `develop → main` avec le CHANGELOG comme description.
 2. Review obligatoire (même en solo : 24 h de relecture à froid).
 3. Vérifier que la CI est verte.
 4. Merger en **« Merge commit »** (pas squash, pour préserver l'historique).
 
-### Étape 5 — Tagger
+### Étape 5 - Tagger
 
 ```bash
 git checkout main
@@ -127,10 +127,10 @@ Pendant les 30 minutes qui suivent :
 
 ### Règles d'or
 
-- **Toujours backward-compatible sur N versions** — un déploiement progressif doit pouvoir coexister avec l'ancienne
+- **Toujours backward-compatible sur N versions** - un déploiement progressif doit pouvoir coexister avec l'ancienne
   version du code pendant la migration.
-- **Pas de DROP COLUMN dans la même release que la dépréciation** — déprécier en V1, supprimer en V2.
-- **Index sur les FK toujours créés avec la migration** — performance & cohérence.
+- **Pas de DROP COLUMN dans la même release que la dépréciation** - déprécier en V1, supprimer en V2.
+- **Index sur les FK toujours créés avec la migration** - performance & cohérence.
 - **Tester sur une copie de la prod** avant chaque migration risquée.
 
 ### Procédure pour une migration risquée
@@ -158,7 +158,7 @@ php artisan tinker
 php artisan up
 ```
 
-### Migrations longues — éviter le mode maintenance
+### Migrations longues - éviter le mode maintenance
 
 Pour les migrations qui prennent plus de quelques secondes :
 

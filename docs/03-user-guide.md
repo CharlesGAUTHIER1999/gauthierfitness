@@ -1,13 +1,13 @@
-# 03 — Manuel d'utilisation
+# 03 - Manuel d'utilisation
 
 > Guide destiné aux **utilisateurs finaux** (clients de la boutique) et aux **administrateurs** qui gèrent le catalogue
 > et les commandes. Couvre la compétence RNCP **C2.4.1**.
 
 ---
 
-## Partie A — Parcours client
+## Partie A - Parcours client
 
-### A.1 Découvrir le catalogue
+### A.1 - Découvrir le catalogue
 
 1. Ouvrir <https://gauthierfitness.fr>.
 2. La page d'accueil affiche les produits mis en avant.
@@ -23,40 +23,40 @@
     - Bouton **« Personnaliser »** si le produit est customisable
     - Bouton **« Ajouter au panier »**
 
-### A.2 Personnaliser un produit (2D)
+### A.2 - Personnaliser un produit (3D)
 
 Disponible sur les vêtements et accessoires customisables.
 
 1. Cliquer sur **« Personnaliser »** sur la page produit.
-2. L'éditeur 2D s'ouvre avec une vue du produit.
+2. L'éditeur 3D s'ouvre avec une vue du produit.
 3. Outils disponibles :
-    - **Texte** — choisir police, couleur, taille, position
-    - **Logo** — uploader un fichier PNG/JPG/WebP (≤ 3 Mo)
-    - **Image** — uploader une image décorative (≤ 5 Mo)
-    - **IA** *(si activée sur le produit)* — décrire un design en langage naturel, l'IA génère une image
+    - **Texte** - choisir police, couleur, taille, position
+    - **Logo** - uploader un fichier PNG/JPG/WebP (≤ 3 Mo)
+    - **Image** - uploader une image décorative (≤ 5 Mo)
+    - **IA** *(si activée sur le produit)* - décrire un design en langage naturel, l'IA génère une image
 4. Manipuler les éléments par drag-and-drop, redimensionner avec les poignées.
 5. Cliquer sur **« Aperçu »** pour voir le rendu final.
-6. Cliquer sur **« Ajouter au panier »** — la personnalisation est enregistrée et liée à la ligne du panier.
+6. Cliquer sur **« Ajouter au panier »** - la personnalisation est enregistrée et liée à la ligne du panier.
 
 #### Mode formulaire (accessibilité)
 
 Pour les utilisateurs ne pouvant pas utiliser la souris, un bouton **« Mode formulaire »** propose la même customisation
 via des champs texte et des sélecteurs.
 
-### A.3 Génération de design par IA
+### A.3 - Génération de design par IA
 
 Sur les produits qui autorisent l'IA :
 
 1. Dans l'éditeur, cliquer sur l'icône **« IA »**.
 2. Saisir un prompt descriptif (10 caractères minimum, 5000 maximum).
     - Exemple : *« Un dragon stylisé en noir et or, esthétique japonaise, sur fond transparent »*
-3. Cliquer sur **« Générer »** — la requête prend 6 à 10 secondes.
+3. Cliquer sur **« Générer »** - la requête prend 6 à 10 secondes.
 4. L'image générée apparaît dans l'éditeur, manipulable comme une image uploadée.
 5. Si le résultat ne convient pas, relancer la génération avec un prompt affiné.
 
-> **Note** — Les designs générés sont sauvegardés dans le compte utilisateur et réutilisables.
+> **Note** - Les designs générés sont sauvegardés dans le compte utilisateur et réutilisables.
 
-### A.4 Gérer son panier
+### A.4 - Gérer son panier
 
 1. Cliquer sur l'icône panier en haut à droite.
 2. Pour chaque ligne :
@@ -66,7 +66,7 @@ Sur les produits qui autorisent l'IA :
 3. Le sous-total et le délai de livraison s'affichent en bas.
 4. Cliquer sur **« Passer commande »** pour aller au checkout.
 
-### A.5 Passer commande
+### A.5 - Passer commande
 
 1. Connexion / inscription si pas déjà connecté.
 2. Saisir l'**adresse de livraison** (prénom, nom, adresse, code postal, ville, pays, téléphone optionnel).
@@ -76,7 +76,7 @@ Sur les produits qui autorisent l'IA :
 6. **Redirection vers la page de confirmation** avec récap de commande.
 7. Email de confirmation envoyé dans la foulée.
 
-### A.6 Suivre ses commandes
+### A.6 - Suivre ses commandes
 
 1. Menu **« Mon compte » → « Mes commandes »**.
 2. Liste des commandes par ordre antéchronologique.
@@ -87,7 +87,7 @@ Sur les produits qui autorisent l'IA :
 4. Cliquer sur une commande pour voir le détail (lignes, prix unitaire, personnalisations).
 5. À chaque changement de statut → email automatique.
 
-### A.7 Contacter le support
+### A.7 - Contacter le support
 
 Formulaire de contact en footer : <https://gauthierfitness.fr/contact>
 
@@ -97,15 +97,15 @@ Formulaire de contact en footer : <https://gauthierfitness.fr/contact>
 
 ---
 
-## Partie B — Back-office administrateur
+## Partie B - Back-office administrateur
 
-### B.1 Accéder à l'admin
+### B.1 - Accéder à l'admin
 
 1. Se connecter avec un compte ayant le rôle `admin`.
 2. Aller sur <https://gauthierfitness.fr/admin>.
 3. Le dashboard affiche les statistiques globales : produits actifs, commandes du jour/semaine/mois, CA, alertes stock.
 
-### B.2 Gérer le catalogue
+### B.2 - Gérer le catalogue
 
 #### Lister / rechercher les produits
 
@@ -119,17 +119,17 @@ Formulaire de contact en footer : <https://gauthierfitness.fr/contact>
     - Identifiants : nom, SKU (unique), description
     - Prix HT, prix TTC, TVA (généralement 20 %)
     - Flags : actif, customisable, mode (`2d` / `3d`), autoriser texte / image / IA
-    - Options (taille / format / contenance) — ajoutables en une seule étape
+    - Options (taille / format / contenance) - ajoutables en une seule étape
 - À la création, le slug est généré automatiquement à partir du nom et dédupliqué si conflit.
 
 #### Modifier / supprimer un produit
 
 - Cliquer sur une ligne → page d'édition.
 - Tous les champs sont modifiables, sauf le slug.
-- Suppression possible — les commandes existantes conservent leur snapshot et restent consultables.
+- Suppression possible - les commandes existantes conservent leur snapshot et restent consultables.
 - Bouton **« Activer / Désactiver »** pour cacher temporairement du catalogue public.
 
-### B.3 Gérer le stock
+### B.3 - Gérer le stock
 
 #### Vue d'ensemble
 
@@ -140,7 +140,7 @@ Formulaire de contact en footer : <https://gauthierfitness.fr/contact>
 #### Détail d'un produit
 
 - Cliquer sur un produit → vue détail :
-    - **Stock global** (lots sans variante) — par exemple pour la nutrition unitaire
+    - **Stock global** (lots sans variante) - par exemple pour la nutrition unitaire
     - **Stock par option** (lots associés à une taille / goût)
     - Pour chaque lot : numéro, quantité, quantité initiale, date d'expiration
     - Lots triés FIFO (expiration la plus proche en premier)
@@ -166,7 +166,7 @@ Formulaire de contact en footer : <https://gauthierfitness.fr/contact>
     - Date, type (`in` / `out` / `correction`), quantité, raison, lot concerné
     - Sorties (`out`) automatiquement liées à la commande qui a consommé le stock.
 
-### B.4 Gérer les commandes
+### B.4 - Gérer les commandes
 
 #### Lister / rechercher
 
@@ -185,10 +185,10 @@ Formulaire de contact en footer : <https://gauthierfitness.fr/contact>
 #### Changer le statut
 
 - Bouton **« Marquer comme... »** :
-    - **Processing** — commande prise en charge (préparation)
-    - **Shipped** — expédiée → email automatique au client avec numéro de tracking
-    - **Delivered** — livrée → email automatique
-    - **Canceled** — annulée → email automatique
+    - **Processing** - commande prise en charge (préparation)
+    - **Shipped** - expédiée → email automatique au client avec numéro de tracking
+    - **Delivered** - livrée → email automatique
+    - **Canceled** - annulée → email automatique
 
 Les emails ne sont envoyés **qu'une seule fois** par transition grâce aux marqueurs `shipped_email_sent_at`, etc.
 
@@ -199,13 +199,13 @@ Les emails ne sont envoyés **qu'une seule fois** par transition grâce aux marq
 
 ---
 
-## Partie C — Comptes utilisateurs
+## Partie C - Comptes utilisateurs
 
 ### Rôles
 
 | Rôle                | Capacités                                                      |
 |---------------------|----------------------------------------------------------------|
-| Anonyme             | Naviguer le catalogue, contacter le support                    |
+| Anonyme             | Naviguer le catalogue, contacter le support, ajout au panier   |
 | Client (`customer`) | + Ajouter au panier, commander, customiser, voir ses commandes |
 | Admin (`admin`)     | + Accéder au back-office, gérer catalogue / stock / commandes  |
 
@@ -218,7 +218,7 @@ php artisan tinker
 
 ### Réinitialisation de mot de passe
 
-Pas encore exposée côté UI — à passer par l'admin pour générer un nouveau mot de passe :
+Pas encore exposée côté UI - à passer par l'admin pour générer un nouveau mot de passe :
 
 ```bash
 php artisan tinker
@@ -229,7 +229,7 @@ php artisan tinker
 
 ---
 
-## Partie D — Dépannage
+## Partie D - Dépannage
 
 ### « Mon panier disparaît à chaque déconnexion »
 
@@ -247,7 +247,7 @@ vide, vérifier que la commande n'a pas été validée entre temps (un paiement 
 Vider le cache navigateur ou rafraîchir. Le stock est recalculé à la volée par requête SQL (somme des `quantity` des
 lots).
 
-### « L'éditeur 2D ne s'ouvre pas »
+### « L'éditeur 3D ne s'ouvre pas »
 
 - Vérifier que le navigateur supporte WebGL (testable sur <https://get.webgl.org>).
 - Désactiver les bloqueurs de scripts (uBlock peut bloquer `react-konva`).
