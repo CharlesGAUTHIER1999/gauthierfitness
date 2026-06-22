@@ -59,11 +59,11 @@ Cinq documents qui couvrent l'ensemble du cycle de vie du projet :
 
 | Doc                                                               | Pour qui ?                   | Sujet                                                          |
 |-------------------------------------------------------------------|------------------------------|----------------------------------------------------------------|
-| [01 — Architecture & choix techniques](./docs/01-architecture.md) | Tech lead, jury, futur·e dev | Stack, schéma, OWASP Top 10, accessibilité, durcissement VPS   |
-| [02 — Manuel de déploiement](./docs/02-deployment.md)             | DevOps, mainteneur·euse      | CI/CD GitHub Actions, Docker, OVH, déploiement staging & prod  |
-| [03 — Manuel d'utilisation](./docs/03-user-guide.md)              | Utilisateur final, admin     | Parcours client (achat, customisation, paiement) + back-office |
-| [04 — Manuel de mise à jour](./docs/04-upgrade.md)                | Mainteneur·euse              | Procédure de release, migrations DB, rollback, gestion deps    |
-| [05 — API REST](./docs/05-api.md)                                 | Intégrateur·rice, dev front  | Swagger OpenAPI 3.1, authentification Sanctum, exemples        |
+| [01 - Architecture & choix techniques](./docs/01-architecture.md) | Tech lead, jury, futur·e dev | Stack, schéma, OWASP Top 10, accessibilité, durcissement VPS   |
+| [02 - Manuel de déploiement](./docs/02-deployment.md)             | DevOps, mainteneur·euse      | CI/CD GitHub Actions, Docker, OVH, déploiement staging & prod  |
+| [03 - Manuel d'utilisation](./docs/03-user-guide.md)              | Utilisateur final, admin     | Parcours client (achat, customisation, paiement) + back-office |
+| [04 - Manuel de mise à jour](./docs/04-upgrade.md)                | Mainteneur·euse              | Procédure de release, migrations DB, rollback, gestion deps    |
+| [05 - API REST](./docs/05-api.md)                                 | Intégrateur·rice, dev front  | Swagger OpenAPI 3.1, authentification Sanctum, exemples        |
 
 ### Spécification OpenAPI
 
@@ -86,7 +86,7 @@ mkdir gauthierfitness && cd gauthierfitness
 git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-backend.git backend
 git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-frontend.git frontend
 git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-infra.git infra
-git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness.git docs-meta
+git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness.git docs
 
 # Backend (terminal 1)
 cd backend
@@ -103,18 +103,20 @@ npm install
 npm run dev
 ```
 
-L'API tourne sur `http://localhost:8000`, le front sur `http://localhost:5173`, la doc Swagger sur `http://localhost:8000/docs/api`.
+L'API tourne sur `http://localhost:8000`, le frontend sur `http://localhost:5173`, la documentation Swagger sur `http://localhost:8000/docs/api`.
 Détail complet des pré-requis et options Docker → [docs/02-deployment.md § 3](./docs/02-deployment.md#3-démarrage-local).
 
 ---
 
 ## Convention de branchage
 
-Tous les repos suivent la même nomenclature :
+**Repos applicatifs** (`backend`, `frontend`) :
 
-- `feature` : `GF{n}-{NomCourt}` (ex : `GF21-SwaggerDoc`, `GF16-Build-Pipeline-V0`)
-- `develop` : intégration continue, déploie sur **staging** automatiquement
-- `main` : déploie sur **production** après gate manuelle GitHub Actions
+- `feature` : `GF{n}-{NomCourt}` (ex : `GF21-SwaggerDoc`, `GF22-Documentation`)
+- `develop` : intégration continue, push → image GHCR `:develop` → staging déployé automatiquement
+- `main` : push → image GHCR `:latest` → déploiement prod **déclenché manuellement** via le workflow `Deploy Pipeline` du repo infra
+
+**Repo infra** : pas de branches feature, juste `develop` → `main` (PR). Les workflows `deploy.yml` lisent les configs du repo et les poussent en SSH sur les VPS.
 
 ---
 

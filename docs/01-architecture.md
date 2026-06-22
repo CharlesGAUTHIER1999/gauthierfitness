@@ -59,7 +59,7 @@ session de personnalisation persistée (snapshot côté back) → une commande S
               └──────────────────────────┘    └────────────────────┘
 ```
 
-### Flux critique — commande personnalisée
+### Flux critique - commande personnalisée
 
 1. **Front** - Utilisateur compose son design dans l'éditeur 3D → `POST /api/customization/sessions` snapshote la
    configuration.
@@ -77,7 +77,7 @@ session de personnalisation persistée (snapshot côté back) → une commande S
 
 ## 3. Stack technique - choix et justifications
 
-### Backend — Laravel 13 / PHP 8.3
+### Backend - Laravel 13 / PHP 8.3
 
 | Brique            | Choix                           | Pourquoi                                                                                                                                         |
 |-------------------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -90,21 +90,21 @@ session de personnalisation persistée (snapshot côté back) → une commande S
 | Tests             | **PHPUnit 11**                  | Standard Laravel, SQLite in-memory en CI pour la rapidité.                                                                                       |
 | Qualité code      | **Laravel Pint** (PSR-12)       | Linter officiel Laravel, vérifié en CI.                                                                                                          |
 
-### Frontend — React 19 / Vite 7
+### Frontend - React 19 / Vite 7
 
 | Brique       | Choix                                        | Pourquoi                                                                                                |
 |--------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | Framework UI | **React 19**                                 | Écosystème mature pour SPA, hooks pour la composition, Suspense pour le data fetching.                  |
 | Build        | **Vite 7**                                   | HMR ultra-rapide, ESM natif, bien plus rapide que Webpack pour un projet de cette taille.               |
-| Routing      | **react-router-dom 7**                       | Standard de fait, file-based routing possible si on monte en complexité.                                |
+| Routing      | **React-router-dom 7**                       | Standard de fait, file-based routing possible si on monte en complexité.                                |
 | State global | **Zustand 5**                                | Plus léger et moins verbeux que Redux. Suffit pour panier, auth, customisation.                         |
-| HTTP         | **axios**                                    | Intercepteurs (auth, refresh), gestion d'erreurs centralisée, plus ergonomique que `fetch` pour ce cas. |
+| HTTP         | **Axios**                                    | Intercepteurs (auth, refresh), gestion d'erreurs centralisée, plus ergonomique que `fetch` pour ce cas. |
 | Éditeur 2D   | **Konva** + `react-konva`                    | Performance canvas, API drag/transform/snapping prête à l'emploi, export PNG natif pour les previews.   |
 | Éditeur 3D   | **Three.js** + `@react-three/fiber` + `drei` | Standard 3D web, intégration React idiomatique, helpers `drei` (OrbitControls, Environment, etc.).      |
 | Paiement     | **@stripe/react-stripe-js** + Elements       | Composants officiels, conformité PCI, gestion 3D-Secure automatique.                                    |
-| Icônes       | **react-icons**                              | Une seule lib, importation par module pour optimiser le bundle.                                         |
+| Icônes       | **React-icons**                              | Une seule lib, importation par module pour optimiser le bundle.                                         |
 
-### Infra — Docker + OVH
+### Infra - Docker + OVH
 
 | Brique           | Choix                                                  | Pourquoi                                                                         |
 |------------------|--------------------------------------------------------|----------------------------------------------------------------------------------|
@@ -118,7 +118,7 @@ session de personnalisation persistée (snapshot côté back) → une commande S
 
 ---
 
-## 4. Modèle de données — entités clés
+## 4. Modèle de données - entités clés
 
 ```
 users ─┬──< designs ──< design_assets
@@ -136,14 +136,14 @@ webhook_events ──< webhook_event_failures
 
 ### Points d'attention
 
-- **Snapshot des prix** — `cart_items` et `order_items` portent le prix au moment de l'ajout / commande pour éviter
+- **Snapshot des prix** - `cart_items` et `order_items` portent le prix au moment de l'ajout / commande pour éviter
   qu'un changement de prix produit ne réécrive l'historique. Les `custom_product_sessions` portent aussi un
   `unit_price_snapshot`.
-- **Stock par lot** — Chaque entrée en stock crée un `stock_lot` (numéro de lot, quantité initiale, date d'expiration).
+- **Stock par lot** - Chaque entrée en stock crée un `stock_lot` (numéro de lot, quantité initiale, date d'expiration).
   Les sorties (ventes) sont tracées dans `stock_movements` avec un FIFO sur l'expiration la plus proche.
-- **Idempotence des webhooks** — `webhook_events` indexe `(provider, provider_event_id)` en unique pour rejouer sans
+- **Idempotence des webhooks** - `webhook_events` indexe `(provider, provider_event_id)` en unique pour rejouer sans
   dupliquer le traitement. En cas d'erreur, le retry compte est tracé via `webhook_event_failures`.
-- **Soft state des sessions** — Les `custom_product_sessions` transitent par `draft → ready → added_to_cart → ordered`,
+- **Soft state des sessions** - Les `custom_product_sessions` transitent par `draft → ready → added_to_cart → ordered`,
   ce qui permet à l'utilisateur de continuer une customisation en cours.
 
 ---
@@ -180,24 +180,25 @@ rester cohérents.
 
 - **Tests Feature** (PHPUnit) pour chaque endpoint API critique (auth, panier, paiement, customisation).
 - **SQLite in-memory** en CI pour un cycle test rapide (~30 s).
-- **Tests E2E** Playwright planifiés (cf. `backend/e2e/`).
+- **Tests E2E Playwright** branchés dans le pipeline `infra/.github/workflows/deploy.yml` (job `e2e`, joué contre
+  staging après chaque déploiement automatique). Specs dans `infra/e2e/tests/`.
 
 ---
 
-## 6. Sécurité — couverture OWASP Top 10
+## 6. Sécurité - couverture OWASP Top 10
 
 | Risque                                   | Mesures en place                                                                                                                                                                                                         |
 |------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **A01 — Broken Access Control**          | Sanctum + middleware `auth:sanctum` sur toutes les routes protégées. Middleware `admin` custom pour le back-office. Vérifications d'appartenance explicites (`abort_unless($order->user_id === ...)`).                   |
-| **A02 — Cryptographic Failures**         | TLS Let's Encrypt sur tous les sous-domaines. `bcrypt` pour les passwords (`Hash::make`). Secrets dans `.env` non commité.                                                                                               |
-| **A03 — Injection**                      | Eloquent (PDO préparé) systématique. Pas de `DB::raw()` avec input utilisateur. Validation FormRequest avec règles `exists` pour les FK.                                                                                 |
-| **A04 — Insecure Design**                | Snapshot des prix à l'ajout au panier (impossible de modifier un prix après commande). Idempotence stricte des webhooks Stripe (table `webhook_events`). Transactions DB sur les opérations critiques (paiement, stock). |
-| **A05 — Security Misconfiguration**      | `APP_DEBUG=false` en prod. CORS configuré pour le domaine front uniquement. Headers de sécurité Nginx (HSTS, X-Frame-Options, X-Content-Type-Options).                                                                   |
-| **A06 — Vulnerable Components**          | `composer audit` et `npm audit` en CI. Dependabot activé sur les deux repos. Laravel 13 et React 19 sur les dernières versions stables.                                                                                  |
-| **A07 — Identification & Auth Failures** | Throttling sur les routes sensibles (`throttle:5,1` sur `/contact`). Rotation du token Sanctum à chaque login (un seul token actif par user).                                                                            |
-| **A08 — Software & Data Integrity**      | Signature Stripe (`Webhook::constructEvent`) avec `STRIPE_WEBHOOK_SECRET`. Images Docker signées via GHCR.                                                                                                               |
-| **A09 — Security Logging & Monitoring**  | Logs Laravel (`storage/logs/`) + `Log::info('STRIPE_WEBHOOK_RECEIVED', ...)` sur les événements critiques. À renforcer avec Sentry (cf. [04-upgrade.md](./04-upgrade.md)).                                               |
-| **A10 — SSRF**                           | Pas d'entrée utilisateur dans des URLs serveur-side hors OpenAI (URL fixée en config).                                                                                                                                   |
+| **A01 - Broken Access Control**          | Sanctum + middleware `auth:sanctum` sur toutes les routes protégées. Middleware `admin` custom pour le back-office. Vérifications d'appartenance explicites (`abort_unless($order->user_id === ...)`).                   |
+| **A02 - Cryptographic Failures**         | TLS Let's Encrypt sur tous les sous-domaines. `bcrypt` pour les passwords (`Hash::make`). Secrets dans `.env` non commité.                                                                                               |
+| **A03 - Injection**                      | Eloquent (PDO préparé) systématique. Pas de `DB::raw()` avec input utilisateur. Validation FormRequest avec règles `exists` pour les FK.                                                                                 |
+| **A04 - Insecure Design**                | Snapshot des prix à l'ajout au panier (impossible de modifier un prix après commande). Idempotence stricte des webhooks Stripe (table `webhook_events`). Transactions DB sur les opérations critiques (paiement, stock). |
+| **A05 - Security Misconfiguration**      | `APP_DEBUG=false` en prod. CORS configuré pour le domaine front uniquement. Headers de sécurité Nginx (HSTS, X-Frame-Options, X-Content-Type-Options).                                                                   |
+| **A06 - Vulnerable Components**          | `composer audit` et `npm audit` en CI. Dependabot activé sur les deux repos. Laravel 13 et React 19 sur les dernières versions stables.                                                                                  |
+| **A07 - Identification & Auth Failures** | Throttling sur les routes sensibles (`throttle:5,1` sur `/contact`). Rotation du token Sanctum à chaque login (un seul token actif par user).                                                                            |
+| **A08 - Software & Data Integrity**      | Signature Stripe (`Webhook::constructEvent`) avec `STRIPE_WEBHOOK_SECRET`. Images Docker signées via GHCR.                                                                                                               |
+| **A09 - Security Logging & Monitoring**  | Logs Laravel (`storage/logs/`) + `Log::info('STRIPE_WEBHOOK_RECEIVED', ...)` sur les événements critiques. À renforcer avec Sentry (cf. [04-upgrade.md](./04-upgrade.md)).                                               |
+| **A10 - SSRF**                           | Pas d'entrée utilisateur dans des URLs serveur-side hors OpenAI (URL fixée en config).                                                                                                                                   |
 
 ### Durcissement VPS (suite à incident ransomware staging — mai 2026)
 
@@ -215,21 +216,22 @@ un site public.
 
 Mesures appliquées :
 
-- **Contraste** — Palette validée contre WCAG AA (ratio ≥ 4.5:1 pour les textes).
-- **Navigation clavier** — Tous les éléments interactifs sont `tabindex`-able, focus visible (outline préservé).
-- **Sémantique HTML** — `<button>` pour les actions, `<a>` pour la navigation, `<form>` avec `<label>` associés.
-- **Images** — `alt` systématique sur les produits, `alt=""` sur les images purement décoratives.
-- **Responsive** — Mobile-first, breakpoints à 640 / 1024 / 1280 px.
-- **Erreurs de formulaire** — Messages affichés sous le champ concerné, jamais en alerte modale.
-- **Édition de design** — L'éditeur 2D propose un mode « formulaire » alternatif (champs texte + sélecteurs) pour les
-  personnes ne pouvant pas utiliser la manipulation drag-and-drop.
+- **Contraste** - Palette validée contre WCAG AA (ratio ≥ 4.5:1 pour les textes).
+- **Navigation clavier** - Tous les éléments interactifs sont `tabindex`-able, focus visible (outline préservé).
+- **Sémantique HTML** - `<button>` pour les actions, `<a>` pour la navigation, `<form>` avec `<label>` associés.
+- **Images** - `alt` systématique sur les produits, `alt=""` sur les images purement décoratives.
+- **Responsive** - Mobile-first, breakpoints à 640 / 1024 / 1280 px.
+- **Erreurs de formulaire** - Messages affichés sous le champ concerné, jamais en alerte modale.
+- **Édition de design** - L'éditeur propose un mode « formulaire » alternatif (champs texte + sélecteurs) pour les
+  personnes ne pouvant pas utiliser la manipulation drag-and-drop ou la navigation 3D.
 
 ---
 
 ## 8. Limites connues et axes d'évolution
 
-- **Pas encore de tests E2E** en CI (Playwright préparé mais non branché).
-- **Pas de monitoring applicatif** en production — un Sentry ou similaire est planifié.
-- **Pas de queue worker** dédié — les notifications partent en sync, OK pour le volume actuel mais à externaliser quand
+- **Pas de monitoring applicatif** en production - un Sentry ou équivalent est planifié (
+  cf. [04-upgrade.md](./04-upgrade.md)).
+- **Pas de queue worker dédié** - les notifications partent en sync, OK pour le volume actuel mais à externaliser quand
   le volume augmentera.
-- **Pas de CDN** sur les assets — Nginx gère les statiques, suffisant tant que le trafic reste régional.
+- **Pas de CDN** sur les assets - Nginx gère les statiques, suffisant tant que le trafic reste régional.
+- **Couverture E2E partielle** - auth + admin couverts, parcours d'achat complet à enrichir (cf. `infra/e2e/tests/`).

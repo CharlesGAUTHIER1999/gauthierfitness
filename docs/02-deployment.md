@@ -10,9 +10,9 @@
 
 | Env            | URL                                                             | Branche source | Trigger déploiement                          | Usage                  |
 |----------------|-----------------------------------------------------------------|----------------|----------------------------------------------|------------------------|
-| **Local**      | `http://localhost:8000` (back), `http://localhost:5173` (front) | tous           | manuel (`php artisan serve` + `npm run dev`) | développement          |
-| **Staging**    | `https://staging.gauthierfitness.fr`                            | `develop`      | automatique après CI verte                   | tests fonctionnels, QA |
-| **Production** | `https://gauthierfitness.fr`                                    | `main`         | manuel via GitHub Actions (gate)             | utilisateurs réels     |
+| **Local**      | `http://localhost:8000` (back), `http://localhost:5173` (front) | tous           | Manuel (`php artisan serve` + `npm run dev`) | Développement          |
+| **Staging**    | `https://staging.gauthierfitness.fr`                            | `develop`      | Automatique après CI verte                   | Tests fonctionnels, QA |
+| **Production** | `https://gauthierfitness.fr`                                    | `main`         | Manuel via GitHub Actions (gate)             | Utilisateurs réels     |
 
 Les deux environnements distants tournent sur des **VPS OVH distincts** pour éviter qu'un incident sur l'un ne contamine
 l'autre (cf. incident ransomware staging mai 2026).
@@ -38,7 +38,7 @@ l'autre (cf. incident ransomware staging mai 2026).
 
 ## 3. Démarrage local
 
-### Option A — Sans Docker (recommandé pour le dev)
+### Option A - Sans Docker (recommandé pour le dev)
 
 ```bash
 # Cloner les trois repos côte à côte
@@ -63,12 +63,12 @@ npm run dev
 
 Le script `composer dev` lance en parallèle :
 
-- `php artisan serve` — serveur HTTP
-- `php artisan queue:listen` — worker de queue
-- `php artisan pail` — log streamer (couleurs en temps réel)
+- `php artisan serve` - serveur HTTP
+- `php artisan queue:listen` - worker de queue
+- `php artisan pail` - streamer (couleurs en temps réel)
 - `npm run dev` (côté backend pour les assets Blade éventuels)
 
-### Option B — Avec Docker
+### Option B - Avec Docker
 
 ```bash
 cd backend
@@ -86,7 +86,7 @@ Accès :
 
 ## 4. Variables d'environnement
 
-### Backend — `.env`
+### Backend - `.env`
 
 ```dotenv
 # App
@@ -128,18 +128,22 @@ MAIL_SUPPORT_ADDRESS=hortense.gauthier2002@gmail.com
 API_VERSION=1.0.0
 ```
 
-### Frontend — `.env.local`
+### Frontend - `.env.local`
 
 ```dotenv
-VITE_API_BASE_URL=http://localhost:8000/api
-VITE_STRIPE_KEY=pk_test_xxxxx
+# Laisser vide en dev : le proxy Vite (vite.config.js) redirige /api vers localhost:8000.
+# En staging/prod, mettre l'URL complète : VITE_API_URL=https://api.gauthierfitness.fr/api
+VITE_API_URL=
+
+# Clé publique Stripe (pk_test_... en dev, pk_live_... en prod)
+VITE_STRIPE_PUBLIC_KEY=pk_test_xxxxx
 ```
 
 ---
 
 ## 5. CI/CD
 
-### Workflow GitHub Actions — `backend/.github/workflows/ci-cd.yml`
+### Workflow GitHub Actions - `backend/.github/workflows/ci-cd.yml`
 
 ```
 ┌────────────┐    ┌──────────┐    ┌──────────────┐    ┌──────────────┐
@@ -160,7 +164,7 @@ VITE_STRIPE_KEY=pk_test_xxxxx
 
 Le frontend a son propre workflow (similaire) : build Vite + ESLint + push de l'image nginx servant le `dist/`.
 
-### Déploiement staging — automatique
+### Déploiement staging - automatique
 
 À chaque push sur `develop` qui passe CI verte :
 
@@ -169,7 +173,7 @@ Le frontend a son propre workflow (similaire) : build Vite + ESLint + push de l'
 3. Le workflow `gauthierfitness-infra` se connecte en SSH au VPS staging et exécute `infra/scripts/deploy-staging.sh`
    avec l'image tag.
 
-### Déploiement production — manuel avec gate
+### Déploiement production - manuel avec gate
 
 Pour déployer en prod :
 
@@ -251,7 +255,7 @@ add_header Content-Security-Policy "default-src 'self'; script-src 'self' https:
 ### Monitoring (à mettre en place)
 
 - **Sentry** pour le tracking d'exceptions (planifié).
-- **Grafana / Prometheus** pour les métriques système — pas prioritaire pour l'instant.
+- **Grafana / Prometheus** pour les métriques système - pas prioritaire pour l'instant.
 
 ---
 
@@ -283,8 +287,8 @@ ufw allow 443/tcp          # HTTPS
 ufw enable
 ```
 
-Le port **MySQL 3306 est fermé** vers l'extérieur - accessible uniquement via le réseau Docker interne (`gf_backend_db`
-est exposé sur le réseau `default` du compose, pas en host port).
+Le port **MySQL 3306 est fermé** vers l'extérieur - accessible uniquement via le réseau Docker interne (le service `db`
+du compose, conteneur `gf_db`, est exposé sur le réseau `gf_network`, **pas en host port**).
 
 ### Backups
 
