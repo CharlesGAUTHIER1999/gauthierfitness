@@ -96,6 +96,7 @@ cp .env.example .env
 composer install
 php artisan key:generate
 php artisan migrate --seed
+php artisan storage:link   # requis pour que les images produits soient servies
 composer dev      # serveur + queue + pail + vite simultanés
 
 # Frontend (terminal 2)
