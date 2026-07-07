@@ -42,9 +42,9 @@ l'autre (cf. incident ransomware staging mai 2026).
 
 ```bash
 # Cloner les trois repos côte à côte
-git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-backend.git backend
-git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-frontend.git frontend
-git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-infra.git infra
+git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend.git backend
+git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend.git frontend
+git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra.git infra
 
 # Backend
 cd backend
@@ -52,6 +52,7 @@ cp .env.example .env
 composer install
 php artisan key:generate
 php artisan migrate --seed
+php artisan storage:link   # requis pour que les images produits soient servies
 composer dev      # lance simultanément: artisan serve, queue:listen, pail, vite
 
 # Frontend (dans un autre terminal)
@@ -75,6 +76,7 @@ cd backend
 cp .env.example .env.docker
 docker compose up -d
 docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
 ```
 
 Accès :
