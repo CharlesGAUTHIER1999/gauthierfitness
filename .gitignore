@@ -20,5 +20,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Fichiers verrou Office (créés quand un .docx/.xlsx est ouvert)
+~$*.docx
+~$*.xlsx
+
 # Logs et caches éventuels
 *.log

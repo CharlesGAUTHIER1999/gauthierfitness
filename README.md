@@ -78,15 +78,17 @@ En local (sur le backend) : `http://localhost:8000/docs/api` après `php artisan
 
 ## Démarrage rapide
 
+Les 4 repos sont **publics** : pas besoin de clé SSH ni de compte GitHub pour les cloner.
+
 Pour faire tourner l'ensemble du projet en local, cloner les **3 repos applicatifs** côte à côte :
 
 ```bash
 mkdir gauthierfitness && cd gauthierfitness
 
-git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-backend.git backend
-git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-frontend.git frontend
-git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness-infra.git infra
-git clone git@github.com:CharlesGAUTHIER1999/gauthierfitness.git docs
+git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend.git backend
+git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend.git frontend
+git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra.git infra
+git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness.git docs
 
 # Backend (terminal 1)
 cd backend
@@ -105,6 +107,20 @@ npm run dev
 
 L'API tourne sur `http://localhost:8000`, le frontend sur `http://localhost:5173`, la documentation Swagger sur `http://localhost:8000/docs/api`.
 Détail complet des pré-requis et options Docker → [docs/02-deployment.md § 3](./docs/02-deployment.md#3-démarrage-local).
+
+---
+
+## Remise du projet (zip)
+
+Le code étant réparti sur 4 repos, la remise se fait sous forme d'un **zip unique** régénéré à neuf depuis GitHub
+(garantit que le contenu remis correspond exactement à ce qui est publié, sans fichier local oublié) :
+
+```powershell
+./scripts/build-release-zip.ps1 -Ref main      # ou -Ref v1.0.0 si les repos sont tagués
+```
+
+Produit `../gauthierfitness-release/gauthierfitness-<ref>.zip`, contenant les 4 repos assemblés (sans historique
+Git). Détail du script → [scripts/build-release-zip.ps1](./scripts/build-release-zip.ps1).
 
 ---
 
@@ -130,7 +146,7 @@ Cette documentation couvre principalement les compétences du **Bloc 2 « Concev
 | **C2.1.1** Environnements de déploiement et de test | Protocole de déploiement continu                | [02-deployment.md](./docs/02-deployment.md)                                                    |
 | **C2.1.2** Intégration continue                     | Workflow GitHub Actions                         | [02-deployment.md § CI/CD](./docs/02-deployment.md#5-cicd)                                     |
 | **C2.2.1** Prototype & architecture                 | Architecture structurée, frameworks             | [01-architecture.md](./docs/01-architecture.md)                                                |
-| **C2.2.3** Sécurité & accessibilité                 | OWASP Top 10, OPQUAST                           | [01-architecture.md § Sécurité](./docs/01-architecture.md#6-sécurité--couverture-owasp-top-10) |
+| **C2.2.3** Sécurité & accessibilité                 | OWASP Top 10, OPQUAST, audits Lighthouse        | [01-architecture.md § Sécurité](./docs/01-architecture.md#6-sécurité--couverture-owasp-top-10), rapports [avant](./RNCP-Lighthouse-GF29/1-avant-correctifs.report.html) / [après](./RNCP-Lighthouse-GF29/2-apres-correctifs.report.html) correctifs |
 | **C2.2.4** Déploiement progressif & versioning      | Versioning Git, SemVer                          | [02-deployment.md](./docs/02-deployment.md), [04-upgrade.md](./docs/04-upgrade.md)             |
 | **C2.4.1** Documentation technique d'exploitation   | Manuels déploiement / utilisation / mise à jour | Tout le dossier [`docs/`](./docs/)                                                             |
 

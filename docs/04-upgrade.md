@@ -116,7 +116,7 @@ Voir aussi [02-deployment.md § Déploiement production](./02-deployment.md#dép
 
 Pendant les 30 minutes qui suivent :
 
-- Vérifier les logs Laravel : `docker compose logs -f gf_backend_app | grep -i error`
+- Vérifier les logs Laravel : `docker compose logs -f gf_backend | grep -i error`
 - Vérifier les webhooks Stripe Dashboard (pas de failure massive).
 - Tester un parcours d'achat de bout en bout (compte test → commande test).
 - Surveiller le taux de réponse 5xx via les logs Nginx.
