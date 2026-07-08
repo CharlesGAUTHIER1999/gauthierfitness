@@ -73,7 +73,7 @@ Le script `composer dev` lance en parallèle :
 
 ```bash
 cd backend
-cp .env.example .env.docker
+cp .env.docker.example .env.docker   # DB_HOST=db (nom du service Docker, pas 127.0.0.1)
 docker compose up -d
 docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan storage:link
