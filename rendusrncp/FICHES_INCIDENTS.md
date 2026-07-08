@@ -240,6 +240,64 @@ Vérifié de bout en bout sur un zip `v1.0.0` fraîchement extrait : `docker com
 
 ---
 
+## Fiche 8 — CSP trop restrictive : configurateur 3D affiche une page blanche en production
+
+**Contexte**
+- Environnement : Production **et** staging (`gauthierfitness.fr` / `staging.gauthierfitness.fr`)
+- Repo / fichiers : `infra/nginx/prod.conf` + `staging.conf`, `frontend/src/features/customization/components/CustomizationCanvas3D.jsx`
+- Détecté via : audit Lighthouse authentifié sur la page `/products/:slug/customize` (jusque-là jamais auditée — seule la Home l'avait été)
+- Gravité : **S1 — Critique** (fonctionnalité phare du produit totalement inutilisable en production)
+
+**Étapes de reproduction**
+1. Se connecter et naviguer vers la page de personnalisation d'un produit customisable (ex. `/products/hommes-tshirts-t-shirt-training-211/customize`).
+2. Observer la console navigateur et le rendu de la page.
+
+**Comportement attendu**
+Le configurateur 3D (Three.js) se charge : modèle du vêtement affiché avec éclairage studio, texture, zones personnalisables.
+
+**Comportement observé**
+Page blanche. Score Lighthouse Performance = **0/100** sur cette page (contre 99/100 sur la Home). Console :
+```
+CompileError: WebAssembly.instantiate(): violates CSP — 'unsafe-eval' non autorisé dans script-src
+Refused to connect to 'blob:https://gauthierfitness.fr/...' — connect-src ne liste pas blob:
+Refused to connect to 'https://raw.githack.com/pmndrs/drei-assets/.../studio_small_03_1k.hdr' — domaine absent de connect-src
+THREE.WebGLRenderer: Context Lost.
+```
+
+**Impact utilisateur**
+Fonctionnalité centrale du produit (personnalisation 2D/3D avec génération IA) totalement inaccessible pour tout utilisateur en production et staging.
+
+**Analyse / cause racine**
+La politique CSP durcie (ajoutée pour couvrir OWASP Top 10 / A05, cf. Fiche sécurité) autorisait `script-src 'self' https://js.stripe.com` et `connect-src 'self' https://api.stripe.com https://*.sentry.io ...`, sans anticiper trois besoins du pipeline Three.js :
+1. Le décodeur WASM (Draco/Meshopt) utilisé par `GLTFLoader` pour charger le mesh compressé nécessite la compilation WebAssembly, bloquée sans directive dédiée.
+2. `GLTFLoader` charge les textures via des URLs `blob:` créées côté client (fetch), non couvertes par `connect-src 'self'`.
+3. Le composant `<Stage environment="studio">` (`@react-three/drei`) va chercher par défaut une texture d'environnement HDR sur un CDN tiers (`raw.githack.com`), jamais whitelisté.
+Ce bug n'avait jamais été détecté car le cahier de recettes (SEC-01/SEC-02) vérifiait seulement la **présence** du header CSP, pas son impact fonctionnel sur les pages qui en dépendent le plus — et aucun audit Lighthouse n'avait encore ciblé la page configurateur.
+
+**Correctif appliqué**
+- **Suppression de la dépendance externe** plutôt qu'élargissement de la CSP : le fichier HDR est désormais auto-hébergé (`frontend/public/hdri/studio_small_03_1k.hdr`, 1.6 Mo), `environment="studio"` remplacé par `environment={{ files: "/hdri/studio_small_03_1k.hdr" }}` — sert depuis `'self'`, aucune règle CSP supplémentaire requise pour ce point.
+- CSP `script-src` : ajout de `'wasm-unsafe-eval'` (directive scoped WebAssembly, volontairement préférée à `'unsafe-eval'` qui aurait aussi autorisé `eval()`/`Function()` arbitraires — surface d'attaque XSS bien plus large).
+- CSP `connect-src` et `img-src` : ajout de `blob:`.
+- Commits : `frontend` `5d4eb20`/`f3066b1`, `infra` `940b762`/`2504e06`.
+
+**Déploiement**
+Staging (`workflow_dispatch`, run infra #28971976887) puis production (`workflow_dispatch` avec gate manuel d'approbation sur l'environnement GitHub « Production », run #28973278625) le 08/07/2026.
+
+**Validation**
+Audit Lighthouse authentifié rejoué sur la page configurateur après déploiement :
+
+| | Avant correctif | Après correctif |
+|---|---|---|
+| Performance | **0** (page blanche) | **66** |
+| Accessibilité | 93 | 94 |
+| Bonnes pratiques | 92 | **100** |
+| SEO | 100 | 100 |
+| Erreurs console | 6+ (CSP, WebGL context lost) | **0** |
+
+Capture d'écran avant/après dans `lighthouse/4-prod-configurateur-avant-fix-csp-page-blanche.png` et `lighthouse/4-prod-configurateur-apres-fix-csp.report.html`.
+
+---
+
 ## Note — `guest_token` column not found (probable résidu déjà résolu)
 
 Deux erreurs Sentry liées (`Illuminate\Database\QueryException` — colonne `guest_token` introuvable sur `/api/cart/items`, et `Cannot drop index 'carts_user_id_unique'` lors d'une migration locale), datées du 02-03/07/2026, coïncident exactement avec la création de la migration `2026_07_02_213224_make_carts_guest_capable.php`. Cette migration contient déjà le correctif exact de la seconde erreur (commentaire explicite : *"MySQL requires dropping the FK before dropping the unique index backing it"*), et la suite `GuestCartTest` (7 tests, dont l'usage du `guest_token`) est aujourd'hui intégralement verte. Conclusion : très probablement des événements résiduels de la phase d'écriture de la migration (avant qu'elle ne soit exécutée/corrigée sur l'environnement concerné), pas une anomalie encore active. Pas de nouveau correctif nécessaire — à mentionner dans le cahier de recettes comme anomalie détectée puis résolue (C4.2.1) plutôt qu'ignorée silencieusement.
