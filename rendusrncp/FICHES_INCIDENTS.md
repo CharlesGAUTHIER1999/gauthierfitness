@@ -207,6 +207,39 @@ La configuration des événements écoutés par un webhook Stripe n'est pas vers
 
 ---
 
+## Fiche 7 — `.env.docker.example` manquant : `docker compose up` échoue sur un clone frais
+
+**Contexte**
+- Environnement : local (test de démarrage sur un zip fraîchement téléchargé, hors dev habituel)
+- Repo / commits : `backend`, `2715877`/`7831340` (08/07/2026) ; `gauthierfitness` (meta-repo), `c4ebeeb`/`b8fff28`
+- Consignée sous forme d'issue GitHub réelle : [`gauthierfitness-backend#79`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/issues/79) (ouverte puis fermée le 08/07/2026, via le template `.github/ISSUE_TEMPLATE/bug_report.md`)
+- Gravité : **S2 — Majeure** (un des deux chemins de démarrage documentés était bloquant, pas de contournement sans lire le code)
+
+**Étapes de reproduction**
+1. Cloner `gauthierfitness-backend` à neuf (ou extraire le zip de remise `scripts/build-release-zip.ps1 -Ref v1.0.0`).
+2. Suivre le README § « Docker (optionnel) » : `cp .env.example .env` puis `docker compose up -d`.
+3. La commande échoue immédiatement.
+
+**Comportement attendu**
+`docker compose up -d` démarre les 3 conteneurs (`app`, `nginx`, `db`) sans erreur, comme documenté dans le README.
+
+**Comportement observé**
+`env file .../backend/.env.docker not found`. `docker-compose.yml` référence `.env.docker` en `env_file` pour le service `app`, mais ce fichier n'existe que localement chez l'auteur (gitignored via `.env.*`) et aucun `.env.docker.example` n'était fourni pour le régénérer sur un clone vierge. Le contournement documenté dans `docs/02-deployment.md` (`cp .env.example .env.docker`) aurait de toute façon échoué au démarrage réel : `.env.example` définit `DB_HOST=127.0.0.1`, alors que depuis le conteneur `app` la base doit être jointe via le nom de service Docker `db`.
+
+**Impact utilisateur**
+Bloque tout jury/évaluateur ou nouveau développeur suivant le README à la lettre pour lancer l'app via Docker sur un clone 100 % vierge.
+
+**Analyse / cause racine**
+`.env` a son `.env.example` versionné, mais `.env.docker` n'avait pas d'équivalent — oubli lors de la mise en place du Docker Compose local, jamais détecté faute d'avoir testé un clone réellement vierge.
+
+**Correctif appliqué**
+`backend/.env.docker.example` créé (placeholders, `DB_HOST=db`) + exception ajoutée dans `.gitignore` (`!.env.docker.example`). README backend et `docs/02-deployment.md` (meta-repo) mis à jour avec la bonne commande.
+
+**Validation**
+Vérifié de bout en bout sur un zip `v1.0.0` fraîchement extrait : `docker compose up -d` → `migrate --seed` → `storage:link` → `GET /api/health` → `200 {"status":"ok"}`. Correctif poussé sur `main` sans réémettre de tag (le chemin de démarrage principal sans Docker était déjà vérifié fonctionnel, la section Docker restant explicitement « optionnelle »).
+
+---
+
 ## Note — `guest_token` column not found (probable résidu déjà résolu)
 
 Deux erreurs Sentry liées (`Illuminate\Database\QueryException` — colonne `guest_token` introuvable sur `/api/cart/items`, et `Cannot drop index 'carts_user_id_unique'` lors d'une migration locale), datées du 02-03/07/2026, coïncident exactement avec la création de la migration `2026_07_02_213224_make_carts_guest_capable.php`. Cette migration contient déjà le correctif exact de la seconde erreur (commentaire explicite : *"MySQL requires dropping the FK before dropping the unique index backing it"*), et la suite `GuestCartTest` (7 tests, dont l'usage du `guest_token`) est aujourd'hui intégralement verte. Conclusion : très probablement des événements résiduels de la phase d'écriture de la migration (avant qu'elle ne soit exécutée/corrigée sur l'environnement concerné), pas une anomalie encore active. Pas de nouveau correctif nécessaire — à mentionner dans le cahier de recettes comme anomalie détectée puis résolue (C4.2.1) plutôt qu'ignorée silencieusement.
