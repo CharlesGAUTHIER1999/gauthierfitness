@@ -7,7 +7,7 @@ Cette documentation est l'entrée principale du projet. Elle décrit l'architect
 
 ---
 
-## 📖 Sommaire
+## Sommaire
 
 | Document                                                     | Pour qui ?                        | Contenu                                                                |
 |--------------------------------------------------------------|-----------------------------------|------------------------------------------------------------------------|
@@ -19,7 +19,7 @@ Cette documentation est l'entrée principale du projet. Elle décrit l'architect
 
 ---
 
-## 🚀 Démarrage rapide
+## Démarrage rapide
 
 ```bash
 # Backend (Laravel 13 + PHP 8.3)
@@ -40,7 +40,7 @@ L'API tourne sur `http://localhost:8000`, le front sur `http://localhost:5173`, 
 
 ---
 
-## 📂 Structure du dépôt
+## Structure du dépôt
 
 ```
 gauthierfitness/
@@ -63,7 +63,7 @@ Backend et frontend sont des dépôts Git séparés (mono-repo logique, multi-re
 
 ---
 
-## ✅ Couverture du référentiel RNCP
+## Couverture du référentiel RNCP
 
 Cette documentation couvre les compétences du Bloc 2 « Concevoir et développer des applications logicielles » :
 
