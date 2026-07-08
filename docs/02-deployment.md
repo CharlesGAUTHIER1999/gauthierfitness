@@ -208,12 +208,12 @@ curl /api/health               # health check (200 attendu)
 
 ### Sous-domaines production
 
-| Sous-domaine                     | Service                               | Conteneur                       |
-|----------------------------------|---------------------------------------|----------------------------------|
-| `gauthierfitness.fr`             | Frontend React (SPA servie en static) | `gf_nginx` → `gf_frontend`       |
+| Sous-domaine                     | Service                               | Conteneur                           |
+|----------------------------------|---------------------------------------|-------------------------------------|
+| `gauthierfitness.fr`             | Frontend React (SPA servie en static) | `gf_nginx` → `gf_frontend`          |
 | `api.gauthierfitness.fr`         | API Laravel                           | `gf_nginx` → `gf_backend` (PHP-FPM) |
-| `staging.gauthierfitness.fr`     | Frontend staging                      | VPS distinct                                    |
-| `api-staging.gauthierfitness.fr` | API staging                           | VPS distinct                                    |
+| `staging.gauthierfitness.fr`     | Frontend staging                      | VPS distinct                        |
+| `api-staging.gauthierfitness.fr` | API staging                           | VPS distinct                        |
 
 ### Configuration TLS
 
