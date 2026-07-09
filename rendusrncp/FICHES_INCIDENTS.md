@@ -298,6 +298,40 @@ Capture d'écran avant/après dans `lighthouse/4-prod-configurateur-avant-fix-cs
 
 ---
 
+## Fiche 9 — Timeout de la génération IA (`Maximum execution time of 30 seconds exceeded`) sur `/api/ai/designs/generate`
+
+**Contexte**
+- Environnement : local (première détection, 27/06/2026), confirmé ensuite en staging/production
+- Repo / fichiers : `backend/app/Http/Controllers/AI/AIDesignController.php`, `frontend/src/features/customization/services/customizationService.js`, `infra/nginx/{nginx.conf,prod.conf,staging.conf}`
+- Détecté via : Sentry (`PHP-LARAVEL-3`, 4 occurrences, statut « Ongoing »)
+- Gravité : **S2 — Majeure** (échec systématique de la génération IA au-delà d'un certain délai, sans rendre le reste du site indisponible)
+
+**Étapes de reproduction**
+1. Lancer une génération de design IA (`POST /api/ai/designs/generate`) avec un prompt qui prend du temps à traiter (modération OpenAI + appel `gpt-image-1`).
+2. Si le traitement dépasse 30 secondes, PHP interrompt la requête : `Symfony\Component\ErrorHandler\Error\FatalError: Maximum execution time of 30 seconds exceeded`.
+
+**Comportement attendu**
+La génération IA, dont la durée réelle observée est de 20 à 40 secondes (modération + appel au fournisseur), aboutit normalement sans dépassement de délai, quelle que soit la couche (PHP, proxy nginx, client HTTP frontend).
+
+**Comportement observé**
+Erreur fatale remontée par Sentry sur la transaction `/api/ai/designs/generate`, avec la stack trace pointant vers `vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php` — la requête sortante vers l'API de modération/génération OpenAI n'avait pas terminé avant l'expiration de la limite d'exécution PHP par défaut (30 secondes). Les breadcrumbs Sentry confirment la séquence exacte : requête SQL sur le produit, puis appel HTTP à `https://api.openai.com/v1/moderations`, puis dépassement du délai avant la fin du traitement.
+
+**Impact utilisateur**
+Échec silencieux de la génération IA côté configurateur pour toute requête dont le traitement dépasse le délai effectivement disponible — fonctionnalité différenciante du produit rendue intermittente sans message d'erreur explicite pour l'utilisateur au moment de la première détection.
+
+**Analyse / cause racine**
+Un premier correctif (avant cette fiche) avait aligné deux des trois couches sur la durée réelle du traitement : `set_time_limit(180)` côté contrôleur (`AIDesignController.php:43`) et `{timeout: 180000}` sur l'appel Axios dédié (`customizationService.js:73`). Mais en auditant l'ensemble de la chaîne HTTP pour rédiger cette fiche, le `fastcgi_read_timeout` des trois fichiers nginx (`nginx.conf`, `prod.conf`, `staging.conf`) était resté à sa valeur par défaut de **120 secondes** — inférieure aux 180 secondes désormais autorisées par PHP et par le frontend. Concrètement, nginx aurait coupé la connexion entre le client et PHP-FPM avant que ces deux couches n'atteignent leur propre limite, pour toute génération dont le traitement se situait entre 120 et 180 secondes : le correctif initial était donc incomplet, sans que cela ait été détecté faute d'avoir audité les trois couches ensemble.
+
+**Correctif appliqué**
+`fastcgi_read_timeout` relevé de 120 à **200 secondes** sur les 8 blocs `location` concernés des trois fichiers nginx (`nginx.conf` : local/dev ; `prod.conf` : API même origine + sous-domaine `api.gauthierfitness.fr` ; `staging.conf` : API même origine + sous-domaine `api-staging.gauthierfitness.fr`), pour donner une marge de 20 secondes au-dessus de la limite PHP/frontend plutôt qu'un alignement strict à 180.
+
+**Validation**
+Correctif appliqué et vérifié par relecture croisée des trois couches (`set_time_limit(180)` backend, `timeout: 180000` frontend, `fastcgi_read_timeout 200` nginx — cohérence confirmée). Déploiement en staging puis production à effectuer avant clôture définitive de cette fiche, avec un nouveau test manuel d'une génération volontairement lente pour confirmer l'absence de coupure côté nginx.
+
+Captures dans `preuves_recettes/` : `sentrybackend-1.png` (vue d'ensemble de l'issue Sentry, 4 événements), `sentrybackend-2.png` (breadcrumbs : modération OpenAI puis dépassement), `sentrybackend-4.png` (email d'alerte Sentry).
+
+---
+
 ## Note — `guest_token` column not found (probable résidu déjà résolu)
 
 Deux erreurs Sentry liées (`Illuminate\Database\QueryException` — colonne `guest_token` introuvable sur `/api/cart/items`, et `Cannot drop index 'carts_user_id_unique'` lors d'une migration locale), datées du 02-03/07/2026, coïncident exactement avec la création de la migration `2026_07_02_213224_make_carts_guest_capable.php`. Cette migration contient déjà le correctif exact de la seconde erreur (commentaire explicite : *"MySQL requires dropping the FK before dropping the unique index backing it"*), et la suite `GuestCartTest` (7 tests, dont l'usage du `guest_token`) est aujourd'hui intégralement verte. Conclusion : très probablement des événements résiduels de la phase d'écriture de la migration (avant qu'elle ne soit exécutée/corrigée sur l'environnement concerné), pas une anomalie encore active. Pas de nouveau correctif nécessaire — à mentionner dans le cahier de recettes comme anomalie détectée puis résolue (C4.2.1) plutôt qu'ignorée silencieusement.
