@@ -5,6 +5,20 @@ RNCP) sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [v1.0.1] - 2026-07-10
+
+### Added
+- Fiche d'incident 9 (timeout génération IA) avec validation en conditions réelles.
+- Audit Lighthouse des pages de production, dont la fiche du bug CSP/configurateur 3D.
+- Scénario CONT-03 (preuve du canal support) et clôture complète du cahier de recettes.
+
+### Fixed
+- Instructions de configuration de l'environnement Docker corrigées dans la documentation.
+
+### Changed
+- Compression de A11Y-01.mp4 (90 Mo -> 3 Mo, qualité équivalente).
+- Synchronisation des dossiers Bloc 2 / Bloc 4 avec le cahier de recettes et le décompte d'incidents.
+
 ## [v1.0.0] - 2026-07-08
 
 Première release taguée du meta-repo, alignée avec la V1 de l'application (backend, frontend, infra).
