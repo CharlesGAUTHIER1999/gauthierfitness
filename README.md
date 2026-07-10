@@ -80,7 +80,8 @@ En local (sur le backend) : `http://localhost:8000/docs/api` après `php artisan
 
 Les 4 repos sont **publics** : pas besoin de clé SSH ni de compte GitHub pour les cloner.
 
-Pour faire tourner l'ensemble du projet en local, cloner les **3 repos applicatifs** côte à côte :
+Pour faire tourner l'ensemble du projet en local, cloner les **3 repos applicatifs** côte à côte. Le backend démarre
+via Docker (recommandé — aucune installation de MySQL en local n'est nécessaire) :
 
 ```bash
 mkdir gauthierfitness && cd gauthierfitness
@@ -93,11 +94,10 @@ git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness.git docs
 # Backend (terminal 1)
 cd backend
 cp .env.example .env
-composer install
-php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link   # requis pour que les images produits soient servies
-composer dev      # serveur + queue + pail + vite simultanés
+cp .env.docker.example .env.docker
+docker compose up -d --wait   # attend que MySQL + l'app soient réellement prêts (build inclus au 1er lancement, ~2-4 min)
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
 
 # Frontend (terminal 2)
 cd ../frontend
@@ -106,8 +106,9 @@ npm install
 npm run dev
 ```
 
-L'API tourne sur `http://localhost:8000`, le frontend sur `http://localhost:5173`, la documentation Swagger sur `http://localhost:8000/docs/api`.
-Détail complet des pré-requis et options Docker → [docs/02-deployment.md § 3](./docs/02-deployment.md#3-démarrage-local).
+L'API tourne sur `http://localhost:8000` (health check : `http://localhost:8000/api/health`), le frontend sur
+`http://localhost:5173`, la documentation Swagger sur `http://localhost:8000/docs/api`.
+Alternative sans Docker (nécessite un MySQL local) et détail complet des pré-requis → [docs/02-deployment.md § 3](./docs/02-deployment.md#3-démarrage-local).
 
 ---
 
