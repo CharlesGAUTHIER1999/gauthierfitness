@@ -38,7 +38,9 @@ l'autre (cf. incident ransomware staging mai 2026).
 
 ## 3. Démarrage local
 
-### Option A - Sans Docker (recommandé pour le dev)
+### Option A - Avec Docker (recommandé)
+
+Aucune installation de MySQL en local n'est nécessaire : Docker fournit un environnement complet et reproductible en une poignée de commandes.
 
 ```bash
 # Cloner les trois repos côte à côte
@@ -47,6 +49,37 @@ git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend.git fr
 git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra.git infra
 
 # Backend
+cd backend
+cp .env.example .env
+cp .env.docker.example .env.docker   # DB_HOST=db (nom du service Docker, pas 127.0.0.1)
+docker compose up -d --wait   # attend que MySQL + l'app soient réellement prêts (build inclus au 1er lancement, ~2-4 min)
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
+
+# Frontend (dans un autre terminal)
+cd ../frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Accès :
+
+- API → `http://localhost:8000/api` (health check : `http://localhost:8000/api/health`)
+- Frontend → `http://localhost:5173`
+- MySQL → `localhost:3308` (port mappé pour éviter conflit avec un MySQL local)
+
+### Option B - Sans Docker
+
+Nécessite un serveur **MySQL 8 déjà installé et démarré en local**. `.env.example` contient des identifiants placeholder (`your_db_user` / `your_db_password`) qui ne fonctionnent pas tels quels : créez d'abord une base et un utilisateur qui leur correspondent (ou adaptez `.env` à vos identifiants existants) :
+
+```sql
+CREATE DATABASE gauthier_fitness;
+CREATE USER 'your_db_user'@'localhost' IDENTIFIED BY 'your_db_password';
+GRANT ALL PRIVILEGES ON gauthier_fitness.* TO 'your_db_user'@'localhost';
+```
+
+```bash
 cd backend
 cp .env.example .env
 composer install
@@ -69,21 +102,6 @@ Le script `composer dev` lance en parallèle :
 - `php artisan pail` - streamer (couleurs en temps réel)
 - `npm run dev` (côté backend pour les assets Blade éventuels)
 
-### Option B - Avec Docker
-
-```bash
-cd backend
-cp .env.docker.example .env.docker   # DB_HOST=db (nom du service Docker, pas 127.0.0.1)
-docker compose up -d
-docker compose exec app php artisan migrate --seed
-docker compose exec app php artisan storage:link
-```
-
-Accès :
-
-- API → `http://localhost:8000/api`
-- MySQL → `localhost:3308` (port mappé pour éviter conflit avec un MySQL local)
-
 ---
 
 ## 4. Variables d'environnement
@@ -98,13 +116,14 @@ APP_KEY=                 # généré par artisan key:generate
 APP_DEBUG=true# FALSE en production !
 APP_URL=http://localhost:8000
 
-# DB
+# DB (Option A/Docker : déjà configuré dans .env.docker, DB_HOST=db)
+# Option B/sans Docker : à adapter à l'utilisateur MySQL local créé en §3
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=gauthier_fitness
-DB_USERNAME=root
-DB_PASSWORD=
+DB_USERNAME=your_db_user
+DB_PASSWORD=your_db_password
 
 # Sanctum
 SANCTUM_STATEFUL_DOMAINS=localhost:5173
