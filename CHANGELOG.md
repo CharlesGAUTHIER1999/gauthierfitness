@@ -5,6 +5,11 @@ RNCP) sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [v1.0.2] - 2026-07-10
+
+### Fixed
+- Quickstart (README + docs/02-deployment.md) : Docker devient le chemin recommandé pour le démarrage local, l'option sans Docker nécessitait un MySQL local non documenté.
+
 ## [v1.0.1] - 2026-07-10
 
 ### Added
