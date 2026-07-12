@@ -168,7 +168,7 @@ const {data} = await api.post('/payment/intent', {
 
 L'API expose `POST /api/stripe/webhook` - non documenté ici car il s'agit d'un endpoint serveur-à-serveur appelé par
 Stripe avec une signature HMAC. Voir [
-`StripeController::webhook`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/app/Http/Controllers/StripeController.php)
+`StripeController::webhook`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/app/Http/Controllers/Payments/StripeController.php)
 pour le détail de la vérification (`Webhook::constructEvent`).
 
 ---
