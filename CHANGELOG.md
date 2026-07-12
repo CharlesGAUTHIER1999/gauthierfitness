@@ -5,6 +5,17 @@ RNCP) sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [v1.0.3] - 2026-07-12
+
+### Added
+- `rendusrncp/BLOC2_DOSSIER.docx` finalisé pour le rendu RNCP (relecture complète, page de garde, sommaire réduit aux titres principaux, images redimensionnées).
+
+### Changed
+- Renommage en minuscules de `preuves_recettes/` et synchronisation des chemins (`docs/05-api.md`, `FICHES_INCIDENTS.md`) après la réorganisation des contrôleurs backend.
+
+### Removed
+- Doublons `BLOC2RNCP.docx`, `BLOC4RNCP.docx`, `BLOC4_DOSSIER.docx` (versions obsolètes).
+
 ## [v1.0.2] - 2026-07-10
 
 ### Fixed
