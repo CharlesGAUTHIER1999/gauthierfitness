@@ -5,6 +5,11 @@ RNCP) sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [v1.0.5] - 2026-07-13
+
+### Fixed
+- `README.md` et `docs/02-deployment.md` : le quickstart Docker (chemin recommandé) ne mentionnait jamais `php artisan key:generate`, contrairement au chemin sans Docker déjà correct. `APP_KEY` restait vide dans `.env.docker`, cassant tout ce qui dépend de l'encryption sur une installation fraîche. Repéré en testant le zip de rendu de bout en bout (extraction vierge + build local). Voir aussi le correctif jumeau sur `gauthierfitness-backend` (v1.0.6).
+
 ## [v1.0.4] - 2026-07-13
 
 ### Changed
