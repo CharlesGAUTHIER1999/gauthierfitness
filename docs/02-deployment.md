@@ -53,6 +53,8 @@ cd backend
 cp .env.example .env
 cp .env.docker.example .env.docker   # DB_HOST=db (nom du service Docker, pas 127.0.0.1)
 docker compose up -d --wait   # attend que MySQL + l'app soient réellement prêts (build inclus au 1er lancement, ~2-4 min)
+docker compose exec app php artisan key:generate --show   # copier la clé affichée dans APP_KEY= de .env.docker
+docker compose up -d --force-recreate app                 # recharge le conteneur avec la nouvelle clé
 docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan storage:link
 
