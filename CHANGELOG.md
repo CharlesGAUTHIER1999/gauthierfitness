@@ -5,6 +5,15 @@ RNCP) sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [v1.0.4] - 2026-07-13
+
+### Changed
+- `rendusrncp/cahier_recettes.xlsx` : harmonisation des compteurs de tests (166 PHPUnit / 40 Jest) avec le code et le dossier Bloc 2.
+- `preuves_recettes/ui06-protectedroute-test.png` mise à jour.
+
+### Fixed
+- `preuves_recettes/a11y-01.mp4` : taille corrigée après un premier remplacement surdimensionné (92 Mo → 12 Mo).
+
 ## [v1.0.3] - 2026-07-12
 
 ### Added
