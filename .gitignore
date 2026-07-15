@@ -9,9 +9,6 @@
 /frontend/
 /infra/
 
-# Environnement de travail Claude Code (non public)
-/.claude/
-
 # OS / éditeurs
 .DS_Store
 Thumbs.db
