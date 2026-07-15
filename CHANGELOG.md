@@ -5,6 +5,11 @@ RNCP) sont documentées ici.
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [v1.0.6] - 2026-07-15
+
+### Removed
+- `.gitignore` : suppression d'une règle d'exclusion obsolète référençant un dossier d'outillage local, sans intérêt pour le zip de rendu.
+
 ## [v1.0.5] - 2026-07-13
 
 ### Fixed
