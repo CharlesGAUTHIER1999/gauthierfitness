@@ -542,6 +542,62 @@ scan was really an S3 permissions/plumbing gap, not a finding about the applicat
 
 ---
 
+## Report 12: Blocklist bypass via character substitution, and no dedicated weapon detection on uploaded images
+
+**Context**
+- Environment: Production and staging (both confirmed affected)
+- Repo / files: `backend/app/Services/AI/PromptBlocklist.php`, `backend/app/Services/AI/OpenAIModerationService.php`,
+  `backend/app/Http/Controllers/Customization/CustomizationAssetController.php`
+- Found via: manual testing of the customization guard rails on the live configurator
+- Severity: **S1 - Critical** (illegal/hateful content could be printed on a physical product sold to the public)
+
+**Steps to reproduce**
+1. In the customizer, enter `H!TLER` in the player name field (or any blocklisted term with a digit/symbol
+   substituted for a letter) and submit → accepted instead of rejected.
+2. Upload a neutral photo of a firearm as a free image/logo → accepted instead of rejected.
+
+**Expected behavior**
+Both inputs should be rejected by the existing content-moderation guard rails, the same way a plain blocklisted
+word or an explicitly graphic image already is.
+
+**Observed behavior**
+1. `PromptBlocklist::matches()` normalizes case and accents (`Str::ascii`) before comparing against the blocklist,
+   but not common leetspeak substitutions - `H!TLER` normalizes to `h!tler`, which doesn't match the `\bhitler\b`
+   word-boundary regex.
+2. The existing image moderation only calls OpenAI's standard `/v1/moderations` endpoint, whose categories
+   (sexual, hate, graphic violence, self-harm, illicit) don't include "depicts a weapon" as such - a neutral,
+   non-violent photo of a firearm scores near-zero on every category and is never flagged.
+
+**Analysis / root cause**
+Both guard rails were built to catch what their respective classifiers are actually designed to catch (exact
+blocklisted words; OpenAI's fixed moderation categories), but neither was hardened against a determined user
+deliberately working around the classifier itself - a text obfuscation technique in one case, a content category
+gap in the other.
+
+**Fix applied**
+1. `PromptBlocklist::normalize()`: added a leetspeak substitution map (`0→o, 1→i, 3→e, 4→a, 5→s, 7→t, @→a, $→s,
+   !→i, |→i`) applied to both the input text and the blocklist terms before the word-boundary match.
+2. `OpenAIModerationService::detectProhibitedVisualContent()`: added a second, independent moderation pass using
+   a vision-capable chat model (`gpt-4o-mini`) with a dedicated classification prompt (weapons/firearms, illegal
+   drugs, extremist/hate symbols), run in addition to the standard categorical moderation on every logo/image
+   upload.
+
+**Validation**
+Dedicated unit test (`PromptBlocklistTest::test_detects_leetspeak_character_substitution`) and two Feature tests
+(`CustomizationAssetTest::test_logo_upload_rejects_prohibited_visual_content` /
+`test_image_upload_rejects_prohibited_visual_content`), full suite replayed (200/200 backend tests green). Both
+original bypasses retested manually in the browser after the fix: both now rejected with an explicit message
+before the item can be added to the cart.
+
+**Lesson learned**
+A content-moderation guard rail is only as strong as what its classifier was actually built to detect - a
+whole-word blocklist doesn't survive basic obfuscation, and a general-purpose moderation API doesn't necessarily
+cover every category a specific business considers unacceptable. Worth periodically testing guard rails
+adversarially (trying to break them on purpose), not just confirming they fire on the exact input they were
+designed for.
+
+---
+
 ## Note: `guest_token` column not found (likely already-resolved leftover)
 
 Two related Sentry errors (`Illuminate\Database\QueryException` — `guest_token` column not found on
