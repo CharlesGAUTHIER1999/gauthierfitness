@@ -377,13 +377,13 @@ gate on the GitHub "Production" environment, run #28973278625) on 2026-07-08.
 **Validation**
 Authenticated Lighthouse audit replayed on the configurator page after deployment:
 
-| | Before fix | After fix |
-|---|---|---|
-| Performance | **0** (blank page) | **66** |
-| Accessibility | 93 | 94 |
-| Best practices | 92 | **100** |
-| SEO | 100 | 100 |
-| Console errors | 6+ (CSP, WebGL context lost) | **0** |
+|                | Before fix                   | After fix |
+|----------------|------------------------------|-----------|
+| Performance    | **0** (blank page)           | **66**    |
+| Accessibility  | 93                           | 94        |
+| Best practices | 92                           | **100**   |
+| SEO            | 100                          | 100       |
+| Console errors | 6+ (CSP, WebGL context lost) | **0**     |
 
 Before/after screenshots in `lighthouse/4-prod-configurateur-avant-fix-csp-page-blanche.png` and
 `lighthouse/4-prod-configurateur-apres-fix-csp.report.html`.
