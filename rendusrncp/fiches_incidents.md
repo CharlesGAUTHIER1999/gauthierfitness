@@ -1,333 +1,554 @@
-# Fiches d'incident - GauthierFitness
+# Incident Reports - GauthierFitness
 
 ---
 
-## Fiche 1 : Scramble incompatible avec `php artisan config:cache`
+## Report 1: Scramble incompatible with `php artisan config:cache`
 
-**Contexte**
-- Environnement : Production (déploiement)
-- Repo / commits : `backend`, `95c595d` + `4a53741` (19/06/2026)
-- Gravité : **S1 - Critique** (bloque le déploiement en production)
+**Context**
+- Environment: Production (deployment)
+- Repo / commits: `backend`, `95c595d` + `4a53741` (2026-06-19)
+- Severity: **S1 - Critical** (blocks production deployment)
 
-**Étapes de reproduction**
-1. Définir le `SecurityScheme` Scramble directement dans `config/scramble.php`.
-2. Exécuter `php artisan config:cache` (utilisé par le pipeline de déploiement prod).
-3. Le cache de configuration échoue car Laravel tente de sérialiser la config avec `var_export()`
+**Steps to reproduce**
+1. Define the Scramble `SecurityScheme` directly in `config/scramble.php`.
+2. Run `php artisan config:cache` (used by the prod deployment pipeline).
+3. The config cache fails because Laravel tries to serialize the config with `var_export()`
 
-**Comportement attendu**
-Le déploiement s'exécute sans erreur ; `config:cache` réussit et sert une configuration mise en cache pour de meilleures performances.
+**Expected behavior**
+The deployment runs without error; `config:cache` succeeds and serves a cached configuration for better
+performance.
 
-**Comportement observé**
-`php artisan config:cache` échoue : l'objet `SecurityScheme` de Scramble n'est pas sérialisable par `var_export()`. Le déploiement prod s'arrête en échec.
+**Observed behavior**
+`php artisan config:cache` fails: Scramble's `SecurityScheme` object is not serializable by `var_export()`. The
+prod deployment stops with a failure.
 
-**Impact utilisateur**
-Aucun impact utilisateur final direct (échec détecté avant la bascule de trafic), mais bloque toute mise en production tant que non résolu - risque de gel des livraisons.
+**User impact**
+No direct end-user impact (failure caught before traffic cutover), but blocks any production release until
+resolved - risk of a delivery freeze.
 
-**Analyse / cause racine**
-La définition du schéma de sécurité vivait dans un fichier de config statique (`config/scramble.php`), alors qu'elle contient un objet PHP complexe non compatible avec la sérialisation `var_export()` utilisée par `config:cache`.
+**Analysis / root cause**
+The security scheme definition lived in a static config file (`config/scramble.php`), while it holds a complex
+PHP object incompatible with the `var_export()` serialization used by `config:cache`.
 
-**Correctif appliqué**
-Déplacement de la définition du `SecurityScheme` dans `AppServiceProvider` (code exécuté au boot de l'application). Deux commits : le déplacement initial (`95c595d`) puis un nettoyage (`4a53741`).
+**Fix applied**
+Moved the `SecurityScheme` definition into `AppServiceProvider` (code executed at application boot). Two commits:
+the initial move (`95c595d`) then a cleanup (`4a53741`).
 
 **Validation**
-`config:cache` s'exécute sans erreur, redéploiement réussi, documentation Swagger/OpenAPI toujours générée correctement (`swagger/openapi.json` régénéré dans le même commit).
+`config:cache` runs without error, redeployment succeeded, Swagger/OpenAPI documentation still generated
+correctly (`swagger/openapi.json` regenerated in the same commit).
 
 ---
 
-## Fiche 2 : Divergence de prix entre l'affichage et le montant réellement facturé (produits personnalisés)
+## Report 2: Price mismatch between the displayed amount and the amount actually charged (customized products)
 
-**Contexte**
-- Environnement : Détecté en relecture de code (contrôle qualité pré-V1), avant impact réel en production
-- Repo / fichier : `backend/app/Http/Controllers/Payments/StripeController.php`
-- Gravité : **S1 - Critique** (paiement, intégrité financière)
+**Context**
+- Environment: Found during code review (pre-V1 quality control), before any real production impact
+- Repo / file: `backend/app/Http/Controllers/Payments/StripeController.php`
+- Severity: **S1 - Critical** (payment, financial integrity)
 
-**Étapes de reproduction**
-1. Ajouter au panier un produit personnalisé avec une session de personnalisation ayant un `unit_price_snapshot` différent du prix de base du produit/option.
-2. Lancer le paiement (`createPaymentIntent`) : le montant facturé à Stripe utilise le snapshot de prix de la session.
-3. Observer la ligne de commande (`OrderItem`) créée en parallèle.
+**Steps to reproduce**
+1. Add a customized product to the cart with a customization session whose `unit_price_snapshot` differs from
+   the product's/option's base price.
+2. Start the payment (`createPaymentIntent`): the amount charged to Stripe uses the session's price snapshot.
+3. Observe the order line (`OrderItem`) created in parallel.
 
-**Comportement attendu**
-Le montant facturé par Stripe et le prix enregistré sur la ligne de commande (`OrderItem.unit_price`) doivent être strictement identiques.
+**Expected behavior**
+The amount charged by Stripe and the price recorded on the order line (`OrderItem.unit_price`) must be strictly
+identical.
 
-**Comportement observé**
-2 boucles distinctes recalculaient le prix unitaire différemment pour le même article : l'une pour le total envoyé à Stripe (avec snapshot), l'autre pour l'enregistrement de la ligne de commande (sans le même ordre de priorité) - risque de divergence entre le montant réellement débité et le montant enregistré.
+**Observed behavior**
+2 separate loops recalculated the unit price differently for the same item: one for the total sent to Stripe
+(with the snapshot), the other for recording the order line (without the same priority order) - risk of a
+mismatch between the amount actually charged and the amount recorded.
 
-**Impact utilisateur**
-Risque de facturation incohérente avec l'historique de commande affiché au client (montant débité ≠ montant affiché sur la commande).
+**User impact**
+Risk of inconsistent billing versus the order history shown to the customer (amount charged ≠ amount shown on
+the order).
 
-**Analyse / cause racine**
-Duplication de la logique de calcul de prix dans deux blocs de code séparés de la même méthode, sans source unique de vérité.
+**Analysis / root cause**
+Duplicated price calculation logic in two separate code blocks of the same method, with no single source of
+truth.
 
-**Correctif appliqué**
-Fusion en une seule logique de calcul, désormais isolée dans `App\Services\Pricing\CartPricingCalculator` (`unitPrice()`, `lineTotal()`, `round()`) et réutilisée à la fois pour le total Stripe et pour la création de `OrderItem`.
+**Fix applied**
+Merged into a single calculation logic, now isolated in `App\Services\Pricing\CartPricingCalculator`
+(`unitPrice()`, `lineTotal()`, `round()`) and reused both for the Stripe total and for creating the `OrderItem`.
 
 **Validation**
-Test de non-régression `StripeIntentTest::test_order_item_price_matches_the_amount_charged_for_customized_products` - rouge sur l'ancien code, vert après correctif (confirmé dans la suite actuelle : 164/164 tests backend verts). Complété par 6 tests unitaires purs sur `CartPricingCalculatorTest`.
+Regression test `StripeIntentTest::test_order_item_price_matches_the_amount_charged_for_customized_products` -
+red on the old code, green after the fix (confirmed in the current suite: 164/164 backend tests green).
+Complemented by 6 pure unit tests on `CartPricingCalculatorTest`.
 
 ---
 
-## Fiche 3 : Redirection aléatoire après connexion (race condition frontend)
+## Report 3: Random redirect after login (frontend race condition)
 
-**Contexte**
-- Environnement : Détecté en E2E (Cypress), reproduit manuellement
-- Repo / fichier : `frontend/src/pages/Login.jsx`
-- Statut : correctif prêt sur la branche en cours (à fusionner avec GF31)
-- Gravité : **S2 - Majeure** (contournement possible : recharger/renaviguer manuellement)
+**Context**
+- Environment: Found in E2E (Cypress), reproduced manually
+- Repo / file: `frontend/src/pages/Login.jsx`
+- Status: fix ready on the current branch (to be merged with GF31)
+- Severity: **S2 - Major** (workaround possible: manually reload/renavigate)
 
-**Étapes de reproduction**
-1. Se connecter avec des identifiants valides.
-2. Observer la redirection immédiatement après la résolution de la promesse `login()`.
-3. Répéter plusieurs fois : l'atterrissage varie aléatoirement entre la page de destination attendue et `/login`.
+**Steps to reproduce**
+1. Log in with valid credentials.
+2. Observe the redirect immediately after the `login()` promise resolves.
+3. Repeat several times: the landing page varies randomly between the expected destination and `/login`.
 
-**Comportement attendu**
-Après une connexion réussie, l'utilisateur est systématiquement redirigé vers la destination prévue (page demandée via `?redirect=`, ou `/admin`/`/` selon le rôle).
+**Expected behavior**
+After a successful login, the user is consistently redirected to the intended destination (page requested via
+`?redirect=`, or `/admin`/`/` depending on role).
 
-**Comportement observé**
-La navigation était déclenchée juste après la résolution de `login()`, avant que le contexte d'authentification React (`token`/`user`) n'ait fini de se propager. Les gardes de route (`ProtectedRoute`/`AdminRoute`) lisaient parfois un contexte encore obsolète, renvoyant l'utilisateur vers `/login`.
+**Observed behavior**
+Navigation was triggered right after `login()` resolved, before the React authentication context (`token`/`user`)
+had finished propagating. The route guards (`ProtectedRoute`/`AdminRoute`) sometimes read a still-stale context,
+sending the user back to `/login`.
 
-**Impact utilisateur**
-Utilisateur connecté avec succès mais renvoyé à tort vers l'écran de connexion - confusion, perception d'un bug de connexion alors que l'authentification a réussi côté serveur.
+**User impact**
+User successfully logged in but wrongly sent back to the login screen - confusion, perceived as a login bug even
+though server-side authentication succeeded.
 
-**Analyse / cause racine**
-`setState` React asynchrone (mise à jour du contexte d'authentification) lu trop tôt par un appel `navigate()` synchrone exécuté juste après l'await de `login()`.
+**Analysis / root cause**
+Asynchronous React `setState` (authentication context update) read too early by a synchronous `navigate()` call
+executed right after awaiting `login()`.
 
-**Correctif appliqué**
-La navigation est désormais déclenchée depuis un `useEffect` qui observe l'état d'authentification (`token`, `user`) une fois réellement commité, plutôt qu'en synchrone après l'appel à `login()`.
+**Fix applied**
+Navigation is now triggered from a `useEffect` that watches the authentication state (`token`, `user`) once it's
+actually committed, rather than synchronously right after the `login()` call.
 
 **Validation**
-3 tests de non-régression ajoutés dans `Login.test.jsx` (confirmés verts dans la suite actuelle : 39/39 tests frontend).
+3 regression tests added in `Login.test.jsx` (confirmed green in the current suite: 39/39 frontend tests).
 
 ---
 
-## Fiche 4 : Incident ransomware sur le VPS staging (28/05/2026)
+## Report 4: Ransomware incident on the staging VPS (2026-05-28)
 
-**Contexte**
-- Environnement : VPS staging OVH (`51.210.15.118`)
-- Date : 28/05/2026
-- Gravité : **S1 - Critique** (compromission de données, bien que sans impact réel grâce aux sources locales)
+**Context**
+- Environment: OVH staging VPS (`51.210.15.118`)
+- Date: 2026-05-28
+- Severity: **S1 - Critical** (data compromise, though with no real impact thanks to local sources)
 
-**Étapes de reproduction / vecteur d'attaque**
-1. `docker-compose.yml` publiait le port MySQL sur `0.0.0.0:3306` (accessible depuis Internet).
-2. Mots de passe de base de données par défaut, insuffisamment robustes.
-3. Un bot automatisé a scanné et trouvé le port ouvert, s'est connecté, puis a supprimé (`DROP`) l'ensemble des tables.
-4. Une table de rançon `RECOVER_YOUR_DATA_info` a été laissée (demande de 0.016 BTC).
+**Steps to reproduce / attack vector**
+1. `docker-compose.yml` published the MySQL port on `0.0.0.0:3306` (reachable from the Internet).
+2. Default database passwords, insufficiently strong.
+3. An automated bot scanned and found the open port, connected, then dropped (`DROP`) all the tables.
+4. A ransom table `RECOVER_YOUR_DATA_info` was left behind (demanding 0.016 BTC).
 
-**Comportement attendu**
-Aucun service de base de données ne doit être accessible directement depuis Internet ; seul le backend applicatif (réseau Docker interne) doit pouvoir s'y connecter.
+**Expected behavior**
+No database service should be directly reachable from the Internet; only the application backend (internal
+Docker network) should be able to connect to it.
 
-**Comportement observé**
-Toutes les tables de la base staging supprimées par l'attaquant. Rançon non payée.
+**Observed behavior**
+All tables in the staging database were deleted by the attacker. Ransom not paid.
 
-**Impact utilisateur**
-Aucune perte réelle de données : les données sources existaient en local (environnement de développement), la base staging a simplement été reconstituée. Aucun impact sur la production (jamais compromise) ni sur des données clients réelles.
+**User impact**
+No real data loss: the source data existed locally (development environment), the staging database was simply
+rebuilt. No impact on production (never compromised) nor on real customer data.
 
-**Analyse / cause racine**
-- Cause directe : port 3306 publié dans `docker-compose.yml` (`ports: - "3306:3306"`).
-- Cause aggravante découverte pendant l'investigation : `docker-compose.prod.yml` déclarait `db: ports: []`, dans l'intention de fermer le port en production - mais Docker Compose **concatène** les listes `ports` entre fichiers superposés au lieu de les remplacer, donc la prod restait, elle aussi, exposée (fermée dès le lendemain, jamais compromise).
-- `ufw` ne bloque pas les ports publiés par Docker : Docker écrit directement dans `iptables`, contournant le firewall applicatif.
+**Analysis / root cause**
+- Direct cause: port 3306 published in `docker-compose.yml` (`ports: - "3306:3306"`).
+- Aggravating cause found during the investigation: `docker-compose.prod.yml` declared `db: ports: []`, intending
+  to close the port in production - but Docker Compose **concatenates** `ports` lists across overlaid files
+  instead of replacing them, so production was, in fact, also exposed (closed the very next day, never
+  compromised).
+- `ufw` doesn't block ports published by Docker: Docker writes directly to `iptables`, bypassing the application
+  firewall.
 
-**Correctif et durcissement appliqués (sur les deux VPS, staging et prod)**
-- Retrait complet du port 3306 de `docker-compose.yml` (commité sur `main`, source du déploiement).
-- Rotation des mots de passe de base de données (utilisateur applicatif + `root@%`/`root@localhost`).
-- Durcissement SSH (`/etc/ssh/sshd_config.d/00-hardening.conf`) : `PasswordAuthentication no`, `PermitRootLogin no` — préfixe `00-` pour s'appliquer avant `50-cloud-init.conf` qui réactive l'authentification par mot de passe.
-- Pare-feu `ufw` : politique par défaut `deny incoming`, autorisation explicite des ports 22/80/443.
+**Fix and hardening applied (on both VPS, staging and prod)**
+- Fully removed port 3306 from `docker-compose.yml` (committed to `main`, the deployment source).
+- Rotated database passwords (application user + `root@%`/`root@localhost`).
+- SSH hardening (`/etc/ssh/sshd_config.d/00-hardening.conf`): `PasswordAuthentication no`,
+  `PermitRootLogin no` — `00-` prefix so it applies before `50-cloud-init.conf`, which re-enables password
+  authentication.
+- `ufw` firewall: default policy `deny incoming`, explicit allow for ports 22/80/443.
 
 **Validation**
-Vérification en conditions réelles (06/07/2026) : test de connexion TCP sur le port 3306 depuis l'extérieur, prod et staging - `TcpTestSucceeded: False` sur les deux VPS (`51.38.234.197` et `51.210.15.118`). Port confirmé non joignable depuis Internet.
+Verified under real conditions (2026-07-06): TCP connection test on port 3306 from the outside, prod and staging
+- `TcpTestSucceeded: False` on both VPS (`51.38.234.197` and `51.210.15.118`). Port confirmed unreachable from
+the Internet.
 
-**Dette restante à mentionner**
-Le durcissement (ufw, SSH) vit directement sur les VPS et n'est pas versionné dans l'infra-as-code — à reproduire manuellement si un VPS est reconstruit. Amélioration proposée (C4.3.1) : script `setup-vps.sh` versionné.
+**Remaining debt to mention**
+The hardening (ufw, SSH) lives directly on the VPS and isn't versioned as infrastructure-as-code — it would need
+to be reproduced manually if a VPS is rebuilt. Proposed improvement (C4.3.1): a versioned `setup-vps.sh` script.
 
 ---
 
-## Fiche 5 : `Class "Redis" not found` détectée via Sentry
+## Report 5: `Class "Redis" not found` detected via Sentry
 
-**Contexte**
-- Environnement : Production / staging (détecté via Sentry, 41 occurrences sur 1 semaine, statut "Ongoing" au moment de la détection)
-- Repo / fichier : `backend/config/database.php` (config Redis), `infra/docker-compose.yml`, `infra/.env.prod.example` / `.env.staging.example`
-- Gravité : **S2 - Majeure** (dégrade les requêtes qui touchent le cache/session/queue redis, sans rendre le site totalement indisponible)
+**Context**
+- Environment: Production / staging (detected via Sentry, 41 occurrences over 1 week, status "Ongoing" at time of
+  detection)
+- Repo / file: `backend/config/database.php` (Redis config), `infra/docker-compose.yml`,
+  `infra/.env.prod.example` / `.env.staging.example`
+- Severity: **S2 - Major** (degrades requests touching the redis cache/session/queue, without making the site
+  fully unavailable)
 
-**Étapes de reproduction**
-1. Déployer avec `CACHE_STORE=redis` / `SESSION_DRIVER=redis` / `QUEUE_CONNECTION=redis` (valeurs prévues dans `infra/.env.prod.example` et `.env.staging.example`, un service Docker `redis` existe bien dans `docker-compose.yml`).
-2. Toute requête qui sollicite effectivement le cache, la session ou la queue redis lève `Class "Redis" not found`.
+**Steps to reproduce**
+1. Deploy with `CACHE_STORE=redis` / `SESSION_DRIVER=redis` / `QUEUE_CONNECTION=redis` (values set in
+   `infra/.env.prod.example` and `.env.staging.example`, a `redis` Docker service does exist in
+   `docker-compose.yml`).
+2. Any request that actually uses the redis cache, session, or queue throws `Class "Redis" not found`.
 
-**Comportement attendu**
-Le cache/session/queue redis fonctionne normalement, sans erreur.
+**Expected behavior**
+The redis cache/session/queue works normally, without error.
 
-**Comportement observé**
-Erreur fatale `Class "Redis" not found` remontée par Sentry (`PHP-LARAVEL-6`), 41 événements sur une semaine, dernière occurrence 16 h avant détection, sur la route `/`.
+**Observed behavior**
+Fatal error `Class "Redis" not found` reported by Sentry (`PHP-LARAVEL-6`), 41 events over one week, last
+occurrence 16 hours before detection, on the `/` route.
 
-**Impact utilisateur**
-Dégradation silencieuse (session/cache/queue en échec) sur les requêtes concernées, sans page d'erreur visible pour l'utilisateur final dans la majorité des cas (le site restait globalement fonctionnel, confirmé par des tests `curl` sur prod et staging le jour de l'investigation).
+**User impact**
+Silent degradation (session/cache/queue failing) on the affected requests, with no visible error page for the
+end user in most cases (the site remained broadly functional, confirmed by `curl` tests on prod and staging on
+the day of the investigation).
 
-**Analyse / cause racine**
-Laravel résout le client Redis via `config('database.redis.client')`, dont la valeur par défaut du framework est `phpredis` (extension PHP native). Le `Dockerfile` backend n'installe pas l'extension `ext-redis`, et `predis/predis` (client Redis pur PHP, alternative à l'extension) n'était pas déclaré comme dépendance directe du projet - uniquement suggéré en dépendance optionnelle par des packages tiers (Sentry SDK notamment). Résultat : dès qu'un code path sollicitait réellement Redis, la classe `Redis` (extension native) était introuvable.
+**Analysis / root cause**
+Laravel resolves the Redis client via `config('database.redis.client')`, whose framework default is `phpredis`
+(native PHP extension). The backend `Dockerfile` doesn't install the `ext-redis` extension, and `predis/predis`
+(a pure-PHP Redis client, an alternative to the extension) wasn't declared as a direct project dependency - only
+suggested as an optional dependency by third-party packages (notably the Sentry SDK). Result: as soon as any code
+path actually used Redis, the `Redis` class (native extension) couldn't be found.
 
-**Correctif appliqué**
-- `composer require predis/predis` (client Redis pur PHP, aucune extension native ni changement d'image Docker nécessaire).
-- `config/database.php` : valeur par défaut de `REDIS_CLIENT` changée de `phpredis` à `predis`.
+**Fix applied**
+- `composer require predis/predis` (pure-PHP Redis client, no native extension or Docker image change needed).
+- `config/database.php`: default value of `REDIS_CLIENT` changed from `phpredis` to `predis`.
 
 **Validation**
-Suite complète rejouée après le correctif : 164/164 tests backend toujours verts, `pint --test` toujours clean. **Nécessite un redéploiement** (rebuild de l'image incluant `composer install`) pour prendre effet en prod/staging — à valider avec le prochain `docker compose up -d --build` / pipeline de déploiement (GF31).
+Full suite replayed after the fix: 164/164 backend tests still green, `pint --test` still clean. **Requires a
+redeploy** (image rebuild including `composer install`) to take effect in prod/staging — to be validated with
+the next `docker compose up -d --build` / deployment pipeline run (GF31).
 
 ---
 
-## Fiche 6 : Webhook `payment_intent.payment_failed` non écouté (staging)
+## Report 6: `payment_intent.payment_failed` webhook not listened to (staging)
 
-**Contexte**
-- Environnement : Staging, détecté en exécutant manuellement le scénario **PAY-12** (parcours 3DS Stripe, cahier de recettes C2.3.1)
-- Repo : `infra` (configuration du endpoint webhook Stripe, hors code applicatif)
-- Gravité : **S1 — Critique** (impact direct sur le suivi des commandes en cas de paiement refusé)
+**Context**
+- Environment: Staging, found while manually running scenario **PAY-12** (Stripe 3DS flow, recette test book
+  C2.3.1)
+- Repo: `infra` (Stripe webhook endpoint configuration, outside application code)
+- Severity: **S1 — Critical** (direct impact on order tracking when a payment is declined)
 
-**Étapes de reproduction**
-1. Jouer PAY-12 avec la carte de test 3DS refusée (`4000008400001629`) : le paiement échoue correctement côté Stripe (`payment_intent.payment_failed` généré, visible dans l'onglet "Événements" du Dashboard Stripe).
-2. Observer la commande correspondante côté application : elle reste en `payment_status = pending` / statut "Nouvelle" au lieu de passer à `failed`.
+**Steps to reproduce**
+1. Run PAY-12 with the declined 3DS test card (`4000008400001629`): the payment correctly fails on Stripe's side
+   (`payment_intent.payment_failed` generated, visible under the "Events" tab of the Stripe Dashboard).
+2. Observe the corresponding order on the application side: it stays at `payment_status = pending` / status "New"
+   instead of moving to `failed`.
 
-**Comportement attendu**
-Une commande dont le paiement est refusé doit voir son `payment_status` passer à `failed` (logique déjà présente et correcte dans `StripeController::webhook`).
+**Expected behavior**
+An order whose payment is declined should have its `payment_status` move to `failed` (logic already present and
+correct in `StripeController::webhook`).
 
-**Comportement observé**
-La commande reste indéfiniment en `pending`, alors que Stripe a bien généré l'événement d'échec.
+**Observed behavior**
+The order stays at `pending` indefinitely, even though Stripe did generate the failure event.
 
-**Analyse / cause racine**
-Comparaison de l'onglet "Webhooks → Événements envoyés" du endpoint staging (`https://staging.gauthierfitness.fr/api/stripe/webhook`) avec le log global des événements Stripe : seul `payment_intent.succeeded` apparaissait dans les événements réellement envoyés à ce endpoint. Le endpoint webhook staging n'était tout simplement **pas configuré pour écouter** `payment_intent.payment_failed` — Stripe génère l'événement mais ne le transmet jamais à l'application si le type d'événement n'est pas sélectionné sur la destination. Le code applicatif n'était donc jamais en cause : il gère cet événement correctement dès qu'il le reçoit.
+**Analysis / root cause**
+Comparing the "Webhooks → Events sent" tab of the staging endpoint (`https://staging.gauthierfitness.fr/api/stripe/webhook`)
+with Stripe's global event log: only `payment_intent.succeeded` appeared among the events actually sent to that
+endpoint. The staging webhook endpoint simply **wasn't configured to listen** for `payment_intent.payment_failed`
+— Stripe generates the event but never forwards it to the application if the event type isn't selected on the
+destination. The application code was therefore never at fault: it handles this event correctly as soon as it
+receives it.
 
-**Correctif appliqué**
-Ajout de `payment_intent.payment_failed` à la liste des événements écoutés par la destination webhook staging (Stripe Dashboard → Webhooks → endpoint → Modifier la destination). Vérification croisée : l'endpoint de **production** écoutait déjà correctement les deux événements (`payment_intent.succeeded` + `payment_intent.payment_failed`) - la production n'était pas concernée par cette anomalie.
+**Fix applied**
+Added `payment_intent.payment_failed` to the list of events listened to by the staging webhook destination
+(Stripe Dashboard → Webhooks → endpoint → Edit destination). Cross-check: the **production** endpoint was already
+correctly listening to both events (`payment_intent.succeeded` + `payment_intent.payment_failed`) - production
+was not affected by this issue.
 
 **Validation**
-Rejeu du scénario PAY-12 (carte refusée) après correctif : l'événement `payment_intent.payment_failed` est désormais envoyé au endpoint staging (200 OK), et la commande passe bien en statut `failed` côté back-office — confirmé par Charles après retest.
+Replayed the PAY-12 scenario (declined card) after the fix: the `payment_intent.payment_failed` event is now sent
+to the staging endpoint (200 OK), and the order correctly moves to `failed` status in the back-office — confirmed
+by Charles after retesting.
 
-**Leçon retenue**
-La configuration des événements écoutés par un webhook Stripe n'est pas versionnée (elle vit uniquement dans le Dashboard Stripe), contrairement au code qui la traite - un écart peut donc exister silencieusement entre les deux environnements sans qu'aucun test automatisé ne le détecte, puisque les tests PHPUnit simulent directement l'appel webhook plutôt que de dépendre de la config Stripe réelle. Seule l'exécution manuelle du scénario PAY-12 (justement prévue au cahier de recettes) a permis de le détecter avant la mise en production définitive.
+**Lesson learned**
+The configuration of events listened to by a Stripe webhook isn't versioned (it lives only in the Stripe
+Dashboard), unlike the code that processes it - a silent gap can therefore exist between environments without any
+automated test catching it, since the PHPUnit tests simulate the webhook call directly rather than depending on
+the real Stripe config. Only manually running the PAY-12 scenario (which was precisely planned in the recette
+test book) allowed this to be caught before the final production release.
 
 ---
 
-## Fiche 7 : `.env.docker.example` manquant, `docker compose up` échoue sur un clone frais
+## Report 7: Missing `.env.docker.example`, `docker compose up` fails on a fresh clone
 
-**Contexte**
-- Environnement : local (test de démarrage sur un zip fraîchement téléchargé, hors dev habituel)
-- Repo / commits : `backend`, `2715877`/`7831340` (08/07/2026) ; `gauthierfitness` (meta-repo), `c4ebeeb`/`b8fff28`
-- Consignée sous forme d'issue GitHub réelle : [`gauthierfitness-backend#79`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/issues/79) (ouverte puis fermée le 08/07/2026, via le template `.github/ISSUE_TEMPLATE/bug_report.md`)
-- Gravité : **S2 - Majeure** (un des deux chemins de démarrage documentés était bloquant, pas de contournement sans lire le code)
+**Context**
+- Environment: local (startup test on a freshly downloaded zip, outside normal dev usage)
+- Repo / commits: `backend`, `2715877`/`7831340` (2026-07-08); `gauthierfitness` (meta-repo), `c4ebeeb`/`b8fff28`
+- Logged as a real GitHub issue: [`gauthierfitness-backend#79`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/issues/79)
+  (opened then closed on 2026-07-08, via the `.github/ISSUE_TEMPLATE/bug_report.md` template)
+- Severity: **S2 - Major** (one of the two documented startup paths was blocking, no workaround without reading
+  the code)
 
-**Étapes de reproduction**
-1. Cloner `gauthierfitness-backend` à neuf (ou extraire le zip de remise `scripts/build-release-zip.ps1 -Ref v1.0.0`).
-2. Suivre le README § « Docker (optionnel) » : `cp .env.example .env` puis `docker compose up -d`.
-3. La commande échoue immédiatement.
+**Steps to reproduce**
+1. Clone `gauthierfitness-backend` fresh (or extract the submission zip
+   `scripts/build-release-zip.ps1 -Ref v1.0.0`).
+2. Follow the README § "Docker (optional)": `cp .env.example .env` then `docker compose up -d`.
+3. The command fails immediately.
 
-**Comportement attendu**
-`docker compose up -d` démarre les 3 conteneurs (`app`, `nginx`, `db`) sans erreur, comme documenté dans le README.
+**Expected behavior**
+`docker compose up -d` starts the 3 containers (`app`, `nginx`, `db`) without error, as documented in the README.
 
-**Comportement observé**
-`env file .../backend/.env.docker not found`. `docker-compose.yml` référence `.env.docker` en `env_file` pour le service `app`, mais ce fichier n'existe que localement chez l'auteur (gitignored via `.env.*`) et aucun `.env.docker.example` n'était fourni pour le régénérer sur un clone vierge. Le contournement documenté dans `docs/02-deployment.md` (`cp .env.example .env.docker`) aurait de toute façon échoué au démarrage réel : `.env.example` définit `DB_HOST=127.0.0.1`, alors que depuis le conteneur `app` la base doit être jointe via le nom de service Docker `db`.
+**Observed behavior**
+`env file .../backend/.env.docker not found`. `docker-compose.yml` references `.env.docker` as the `env_file` for
+the `app` service, but this file only exists locally on the author's machine (gitignored via `.env.*`), and no
+`.env.docker.example` was provided to regenerate it on a fresh clone. The workaround documented in
+`docs/02-deployment.md` (`cp .env.example .env.docker`) would have failed at actual startup anyway:
+`.env.example` sets `DB_HOST=127.0.0.1`, whereas from within the `app` container the database must be reached via
+the Docker service name `db`.
 
-**Impact utilisateur**
-Bloque tout jury/évaluateur ou nouveau développeur suivant le README à la lettre pour lancer l'app via Docker sur un clone 100 % vierge.
+**User impact**
+Blocks any jury member/evaluator or new developer following the README to the letter to start the app via Docker
+on a 100% fresh clone.
 
-**Analyse / cause racine**
-`.env` a son `.env.example` versionné, mais `.env.docker` n'avait pas d'équivalent — oubli lors de la mise en place du Docker Compose local, jamais détecté faute d'avoir testé un clone réellement vierge.
+**Analysis / root cause**
+`.env` has its `.env.example` versioned, but `.env.docker` had no equivalent — an oversight when local Docker
+Compose was set up, never caught because a genuinely fresh clone had never been tested.
 
-**Correctif appliqué**
-`backend/.env.docker.example` créé (placeholders, `DB_HOST=db`) + exception ajoutée dans `.gitignore` (`!.env.docker.example`). README backend et `docs/02-deployment.md` (meta-repo) mis à jour avec la bonne commande.
+**Fix applied**
+Created `backend/.env.docker.example` (placeholders, `DB_HOST=db`) + added an exception in `.gitignore`
+(`!.env.docker.example`). Backend README and `docs/02-deployment.md` (meta-repo) updated with the correct
+command.
 
 **Validation**
-Vérifié de bout en bout sur un zip `v1.0.0` fraîchement extrait : `docker compose up -d` → `migrate --seed` → `storage:link` → `GET /api/health` → `200 {"status":"ok"}`. Correctif poussé sur `main` sans réémettre de tag (le chemin de démarrage principal sans Docker était déjà vérifié fonctionnel, la section Docker restant explicitement « optionnelle »).
+Verified end to end on a freshly extracted `v1.0.0` zip: `docker compose up -d` → `migrate --seed` →
+`storage:link` → `GET /api/health` → `200 {"status":"ok"}`. Fix pushed to `main` without re-cutting a tag (the
+main, Docker-free startup path was already verified working, the Docker section remaining explicitly
+"optional").
 
 ---
 
-## Fiche 8 : CSP trop restrictive, configurateur 3D affiche une page blanche en production
+## Report 8: Overly restrictive CSP, 3D configurator shows a blank page in production
 
-**Contexte**
-- Environnement : Production **et** staging (`gauthierfitness.fr` / `staging.gauthierfitness.fr`)
-- Repo / fichiers : `infra/nginx/prod.conf` + `staging.conf`, `frontend/src/features/customization/components/CustomizationCanvas3D.jsx`
-- Détecté via : audit Lighthouse authentifié sur la page `/products/:slug/customize` (jusque-là jamais auditée — seule la Home l'avait été)
-- Gravité : **S1 - Critique** (fonctionnalité phare du produit totalement inutilisable en production)
+**Context**
+- Environment: Production **and** staging (`gauthierfitness.fr` / `staging.gauthierfitness.fr`)
+- Repo / files: `infra/nginx/prod.conf` + `staging.conf`,
+  `frontend/src/features/customization/components/CustomizationCanvas3D.jsx`
+- Found via: authenticated Lighthouse audit on the `/products/:slug/customize` page (never audited until then —
+  only the Home page had been)
+- Severity: **S1 - Critical** (the product's flagship feature completely unusable in production)
 
-**Étapes de reproduction**
-1. Se connecter et naviguer vers la page de personnalisation d'un produit customisable (ex. `/products/hommes-tshirts-t-shirt-training-211/customize`).
-2. Observer la console navigateur et le rendu de la page.
+**Steps to reproduce**
+1. Log in and navigate to the customization page of a customizable product (e.g.
+   `/products/hommes-tshirts-t-shirt-training-211/customize`).
+2. Observe the browser console and the page rendering.
 
-**Comportement attendu**
-Le configurateur 3D (Three.js) se charge : modèle du vêtement affiché avec éclairage studio, texture, zones personnalisables.
+**Expected behavior**
+The 3D configurator (Three.js) loads: garment model shown with studio lighting, texture, customizable zones.
 
-**Comportement observé**
-Page blanche. Score Lighthouse Performance = **0/100** sur cette page (contre 99/100 sur la Home). Console :
+**Observed behavior**
+Blank page. Lighthouse Performance score = **0/100** on this page (vs. 99/100 on Home). Console:
 ```
-CompileError: WebAssembly.instantiate(): violates CSP — 'unsafe-eval' non autorisé dans script-src
-Refused to connect to 'blob:https://gauthierfitness.fr/...' — connect-src ne liste pas blob:
-Refused to connect to 'https://raw.githack.com/pmndrs/drei-assets/.../studio_small_03_1k.hdr' — domaine absent de connect-src
+CompileError: WebAssembly.instantiate(): violates CSP — 'unsafe-eval' not allowed in script-src
+Refused to connect to 'blob:https://gauthierfitness.fr/...' — connect-src does not list blob:
+Refused to connect to 'https://raw.githack.com/pmndrs/drei-assets/.../studio_small_03_1k.hdr' — domain missing from connect-src
 THREE.WebGLRenderer: Context Lost.
 ```
 
-**Impact utilisateur**
-Fonctionnalité centrale du produit (personnalisation 2D/3D avec génération IA) totalement inaccessible pour tout utilisateur en production et staging.
+**User impact**
+The product's core feature (2D/3D customization with AI generation) completely unreachable for any user in
+production and staging.
 
-**Analyse / cause racine**
-La politique CSP durcie (ajoutée pour couvrir OWASP Top 10 / A05, cf. Fiche sécurité) autorisait `script-src 'self' https://js.stripe.com` et `connect-src 'self' https://api.stripe.com https://*.sentry.io ...`, sans anticiper trois besoins du pipeline Three.js :
-1. Le décodeur WASM (Draco/Meshopt) utilisé par `GLTFLoader` pour charger le mesh compressé nécessite la compilation WebAssembly, bloquée sans directive dédiée.
-2. `GLTFLoader` charge les textures via des URLs `blob:` créées côté client (fetch), non couvertes par `connect-src 'self'`.
-3. Le composant `<Stage environment="studio">` (`@react-three/drei`) va chercher par défaut une texture d'environnement HDR sur un CDN tiers (`raw.githack.com`), jamais whitelisté.
-Ce bug n'avait jamais été détecté car le cahier de recettes (SEC-01/SEC-02) vérifiait seulement la **présence** du header CSP, pas son impact fonctionnel sur les pages qui en dépendent le plus - et aucun audit Lighthouse n'avait encore ciblé la page configurateur.
+**Analysis / root cause**
+The hardened CSP policy (added to cover OWASP Top 10 / A05, cf. security report) allowed
+`script-src 'self' https://js.stripe.com` and `connect-src 'self' https://api.stripe.com https://*.sentry.io ...`,
+without anticipating three needs of the Three.js pipeline:
+1. The WASM decoder (Draco/Meshopt) used by `GLTFLoader` to load the compressed mesh requires WebAssembly
+   compilation, blocked without a dedicated directive.
+2. `GLTFLoader` loads textures via client-created `blob:` URLs (fetch), not covered by `connect-src 'self'`.
+3. The `<Stage environment="studio">` component (`@react-three/drei`) fetches an HDR environment texture by
+   default from a third-party CDN (`raw.githack.com`), never whitelisted.
+This bug had never been caught because the recette test book (SEC-01/SEC-02) only checked for the CSP header's
+**presence**, not its functional impact on the pages that depend on it most - and no Lighthouse audit had yet
+targeted the configurator page.
 
-**Correctif appliqué**
-- **Suppression de la dépendance externe** plutôt qu'élargissement de la CSP : le fichier HDR est désormais auto-hébergé (`frontend/public/hdri/studio_small_03_1k.hdr`, 1.6 Mo), `environment="studio"` remplacé par `environment={{ files: "/hdri/studio_small_03_1k.hdr" }}` — sert depuis `'self'`, aucune règle CSP supplémentaire requise pour ce point.
-- CSP `script-src` : ajout de `'wasm-unsafe-eval'` (directive scoped WebAssembly, volontairement préférée à `'unsafe-eval'` qui aurait aussi autorisé `eval()`/`Function()` arbitraires — surface d'attaque XSS bien plus large).
-- CSP `connect-src` et `img-src` : ajout de `blob:`.
-- Commits : `frontend` `5d4eb20`/`f3066b1`, `infra` `940b762`/`2504e06`.
+**Fix applied**
+- **Removed the external dependency** rather than widening the CSP: the HDR file is now self-hosted
+  (`frontend/public/hdri/studio_small_03_1k.hdr`, 1.6 MB), `environment="studio"` replaced with
+  `environment={{ files: "/hdri/studio_small_03_1k.hdr" }}` — served from `'self'`, no extra CSP rule needed for
+  this point.
+- CSP `script-src`: added `'wasm-unsafe-eval'` (a scoped WebAssembly directive, deliberately preferred over
+  `'unsafe-eval'`, which would also have allowed arbitrary `eval()`/`Function()` calls — a much larger XSS attack
+  surface).
+- CSP `connect-src` and `img-src`: added `blob:`.
+- Commits: `frontend` `5d4eb20`/`f3066b1`, `infra` `940b762`/`2504e06`.
 
-**Déploiement**
-Staging (`workflow_dispatch`, run infra #28971976887) puis production (`workflow_dispatch` avec gate manuel d'approbation sur l'environnement GitHub « Production », run #28973278625) le 08/07/2026.
+**Deployment**
+Staging (`workflow_dispatch`, infra run #28971976887) then production (`workflow_dispatch` with a manual approval
+gate on the GitHub "Production" environment, run #28973278625) on 2026-07-08.
 
 **Validation**
-Audit Lighthouse authentifié rejoué sur la page configurateur après déploiement :
+Authenticated Lighthouse audit replayed on the configurator page after deployment:
 
-| | Avant correctif | Après correctif |
+| | Before fix | After fix |
 |---|---|---|
-| Performance | **0** (page blanche) | **66** |
-| Accessibilité | 93 | 94 |
-| Bonnes pratiques | 92 | **100** |
+| Performance | **0** (blank page) | **66** |
+| Accessibility | 93 | 94 |
+| Best practices | 92 | **100** |
 | SEO | 100 | 100 |
-| Erreurs console | 6+ (CSP, WebGL context lost) | **0** |
+| Console errors | 6+ (CSP, WebGL context lost) | **0** |
 
-Capture d'écran avant/après dans `lighthouse/4-prod-configurateur-avant-fix-csp-page-blanche.png` et `lighthouse/4-prod-configurateur-apres-fix-csp.report.html`.
+Before/after screenshots in `lighthouse/4-prod-configurateur-avant-fix-csp-page-blanche.png` and
+`lighthouse/4-prod-configurateur-apres-fix-csp.report.html`.
 
 ---
 
-## Fiche 9 : Timeout de la génération IA (`Maximum execution time of 30 seconds exceeded`) sur `/api/ai/designs/generate`
+## Report 9: AI generation timeout (`Maximum execution time of 30 seconds exceeded`) on `/api/ai/designs/generate`
 
-**Contexte**
-- Environnement : local (première détection, 27/06/2026), confirmé ensuite en staging/production
-- Repo / fichiers : `backend/app/Http/Controllers/AI/AIDesignController.php`, `frontend/src/features/customization/services/customizationService.js`, `infra/nginx/{nginx.conf,prod.conf,staging.conf}`
-- Détecté via : Sentry (`PHP-LARAVEL-3`, 4 occurrences, statut « Ongoing »)
-- Gravité : **S2 - Majeure** (échec systématique de la génération IA au-delà d'un certain délai, sans rendre le reste du site indisponible)
+**Context**
+- Environment: local (first detected 2026-06-27), later confirmed in staging/production
+- Repo / files: `backend/app/Http/Controllers/AI/AIDesignController.php`,
+  `frontend/src/features/customization/services/customizationService.js`,
+  `infra/nginx/{nginx.conf,prod.conf,staging.conf}`
+- Found via: Sentry (`PHP-LARAVEL-3`, 4 occurrences, status "Ongoing")
+- Severity: **S2 - Major** (AI generation systematically fails past a certain delay, without making the rest of
+  the site unavailable)
 
-**Étapes de reproduction**
-1. Lancer une génération de design IA (`POST /api/ai/designs/generate`) avec un prompt qui prend du temps à traiter (modération OpenAI + appel `gpt-image-1`).
-2. Si le traitement dépasse 30 secondes, PHP interrompt la requête : `Symfony\Component\ErrorHandler\Error\FatalError: Maximum execution time of 30 seconds exceeded`.
+**Steps to reproduce**
+1. Start an AI design generation (`POST /api/ai/designs/generate`) with a prompt that takes a while to process
+   (OpenAI moderation + `gpt-image-1` call).
+2. If processing exceeds 30 seconds, PHP kills the request:
+   `Symfony\Component\ErrorHandler\Error\FatalError: Maximum execution time of 30 seconds exceeded`.
 
-**Comportement attendu**
-La génération IA, dont la durée réelle observée est de 20 à 40 secondes (modération + appel au fournisseur), aboutit normalement sans dépassement de délai, quelle que soit la couche (PHP, proxy nginx, client HTTP frontend).
+**Expected behavior**
+AI generation, whose real observed duration is 20 to 40 seconds (moderation + provider call), completes normally
+without a timeout, regardless of the layer (PHP, nginx proxy, frontend HTTP client).
 
-**Comportement observé**
-Erreur fatale remontée par Sentry sur la transaction `/api/ai/designs/generate`, avec la stack trace pointant vers `vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php` — la requête sortante vers l'API de modération/génération OpenAI n'avait pas terminé avant l'expiration de la limite d'exécution PHP par défaut (30 secondes). Les breadcrumbs Sentry confirment la séquence exacte : requête SQL sur le produit, puis appel HTTP à `https://api.openai.com/v1/moderations`, puis dépassement du délai avant la fin du traitement.
+**Observed behavior**
+Fatal error reported by Sentry on the `/api/ai/designs/generate` transaction, with the stack trace pointing to
+`vendor/guzzlehttp/guzzle/src/Handler/CurlFactory.php` — the outgoing request to the OpenAI moderation/generation
+API hadn't finished before PHP's default execution time limit (30 seconds) expired. Sentry breadcrumbs confirm
+the exact sequence: SQL query on the product, then an HTTP call to `https://api.openai.com/v1/moderations`, then
+the timeout before processing finished.
 
-**Impact utilisateur**
-Échec silencieux de la génération IA côté configurateur pour toute requête dont le traitement dépasse le délai effectivement disponible — fonctionnalité différenciante du produit rendue intermittente sans message d'erreur explicite pour l'utilisateur au moment de la première détection.
+**User impact**
+Silent failure of AI generation in the configurator for any request whose processing exceeds the actually
+available delay — a differentiating product feature made intermittent with no explicit error message for the
+user at the time of first detection.
 
-**Analyse / cause racine**
-Un premier correctif (avant cette fiche) avait aligné deux des trois couches sur la durée réelle du traitement : `set_time_limit(180)` côté contrôleur (`AIDesignController.php:43`) et `{timeout: 180000}` sur l'appel Axios dédié (`customizationService.js:73`). Mais en auditant l'ensemble de la chaîne HTTP pour rédiger cette fiche, le `fastcgi_read_timeout` des trois fichiers nginx (`nginx.conf`, `prod.conf`, `staging.conf`) était resté à sa valeur par défaut de **120 secondes** — inférieure aux 180 secondes désormais autorisées par PHP et par le frontend. Concrètement, nginx aurait coupé la connexion entre le client et PHP-FPM avant que ces deux couches n'atteignent leur propre limite, pour toute génération dont le traitement se situait entre 120 et 180 secondes : le correctif initial était donc incomplet, sans que cela ait été détecté faute d'avoir audité les trois couches ensemble.
+**Analysis / root cause**
+An earlier fix (before this report) had aligned two of the three layers with the real processing duration:
+`set_time_limit(180)` on the controller side (`AIDesignController.php:43`) and `{timeout: 180000}` on the
+dedicated Axios call (`customizationService.js:73`). But while auditing the entire HTTP chain to write this
+report, the `fastcgi_read_timeout` of the three nginx files (`nginx.conf`, `prod.conf`, `staging.conf`) had stayed
+at its default value of **120 seconds** — lower than the 180 seconds now allowed by PHP and the frontend.
+Concretely, nginx would have cut the connection between the client and PHP-FPM before either of those two layers
+reached their own limit, for any generation whose processing fell between 120 and 180 seconds: the initial fix
+was therefore incomplete, and this went undetected because the three layers had never been audited together.
 
-**Correctif appliqué**
-`fastcgi_read_timeout` relevé de 120 à **200 secondes** sur les 8 blocs `location` concernés des trois fichiers nginx (`nginx.conf` : local/dev ; `prod.conf` : API même origine + sous-domaine `api.gauthierfitness.fr` ; `staging.conf` : API même origine + sous-domaine `api-staging.gauthierfitness.fr`), pour donner une marge de 20 secondes au-dessus de la limite PHP/frontend plutôt qu'un alignement strict à 180. Vérification complémentaire : l'appel HTTP sortant vers l'API d'images OpenAI (`OpenAIImageService::generate()`) a son propre timeout Guzzle de 120 secondes, volontairement plus court que les trois autres couches — c'est la limite qui doit se déclencher en premier en cas de lenteur anormale du fournisseur, puisqu'elle est interceptée par un `catch` dédié et renvoie une réponse JSON 503 propre (`AiServiceUnavailableException`), plutôt que de laisser nginx ou PHP couper brutalement la connexion. Ce timeout n'a donc pas été modifié.
+**Fix applied**
+`fastcgi_read_timeout` raised from 120 to **200 seconds** across the 8 relevant `location` blocks in the three
+nginx files (`nginx.conf`: local/dev; `prod.conf`: same-origin API + `api.gauthierfitness.fr` subdomain;
+`staging.conf`: same-origin API + `api-staging.gauthierfitness.fr` subdomain), to give a 20-second margin above
+the PHP/frontend limit rather than a strict match at 180. Additional check: the outgoing HTTP call to the OpenAI
+images API (`OpenAIImageService::generate()`) has its own Guzzle timeout of 120 seconds, deliberately shorter than
+the other three layers — it's meant to be the limit that fires first in case of abnormal provider slowness, since
+it's caught by a dedicated `catch` and returns a clean 503 JSON response (`AiServiceUnavailableException`), rather
+than letting nginx or PHP abruptly cut the connection. This timeout was therefore left unchanged.
 
 **Validation**
-Correctif nginx déployé en staging (workflow `Deploy Pipeline`, succès) puis en production après la PR `develop` → `main` et le gate manuel d'approbation (run du 09/07/2026, succès, `/api/health` 200 sur les deux environnements). Le test manuel de génération sur staging a d'abord révélé une anomalie distincte, sans lien avec le timeout : une erreur 503 systématique causée par une clé `OPENAI_API_KEY` obsolète dans le `.env` du VPS, diagnostiquée via Sentry puis corrigée (mise à jour du `.env` + `docker compose up -d --force-recreate backend` + `php artisan config:cache`, nécessaire car Docker ne recharge pas un `env_file` sur un simple `restart`). Une fois cette anomalie corrigée, une génération réelle avec un prompt volontairement détaillé a abouti sans erreur de bout en bout sur staging (design généré, appliqué au produit dans le configurateur 3D).
+Nginx fix deployed to staging (`Deploy Pipeline` workflow, success) then to production after the `develop` →
+`main` PR and the manual approval gate (run on 2026-07-09, success, `/api/health` 200 on both environments). The
+manual generation test on staging first revealed an unrelated issue, unconnected to the timeout: a systematic 503
+error caused by a stale `OPENAI_API_KEY` in the VPS's `.env`, diagnosed via Sentry then fixed (updated `.env` +
+`docker compose up -d --force-recreate backend` + `php artisan config:cache`, required because Docker doesn't
+reload an `env_file` on a plain `restart`). Once that issue was fixed, a real generation with a deliberately
+detailed prompt completed without error end to end on staging (design generated, applied to the product in the 3D
+configurator).
 
-Captures dans `preuves_recettes/` : `sentrybackend-1.png` (vue d'ensemble de l'issue Sentry, 4 événements), `sentrybackend-2.png` (breadcrumbs : modération OpenAI puis dépassement), `sentrybackend-4.png` (email d'alerte Sentry).
+Screenshots in `preuves_recettes/`: `sentrybackend-1.png` (Sentry issue overview, 4 events), `sentrybackend-2.png`
+(breadcrumbs: OpenAI moderation then timeout), `sentrybackend-4.png` (Sentry alert email).
 
 ---
 
-## Note : `guest_token` column not found (probable résidu déjà résolu)
+## Report 10: SSH key path broken by a hidden major bump in `appleboy/scp-action` (v0.1.7 → v1.0.0)
 
-Deux erreurs Sentry liées (`Illuminate\Database\QueryException` — colonne `guest_token` introuvable sur `/api/cart/items`, et `Cannot drop index 'carts_user_id_unique'` lors d'une migration locale), datées du 02-03/07/2026, coïncident exactement avec la création de la migration `2026_07_02_213224_make_carts_guest_capable.php`. Cette migration contient déjà le correctif exact de la seconde erreur (commentaire explicite : *"MySQL requires dropping the FK before dropping the unique index backing it"*), et la suite `GuestCartTest` (7 tests, dont l'usage du `guest_token`) est aujourd'hui intégralement verte. Conclusion : très probablement des événements résiduels de la phase d'écriture de la migration (avant qu'elle ne soit exécutée/corrigée sur l'environnement concerné), pas une anomalie encore active. Pas de nouveau correctif nécessaire — à mentionner dans le cahier de recettes comme anomalie détectée puis résolue (C4.2.1) plutôt qu'ignorée silencieusement.
+**Context**
+- Environment: CI/CD (GitHub Actions, staging and production deploy workflow)
+- Repo / commits: `infra`, `144ce85` (2026-07-13)
+- Severity: **S1 - Critical** (blocks every deployment, staging and production alike)
+
+**Steps to reproduce**
+1. A Dependabot grouped update bumps the `github-actions` dependencies (7 updates bundled in a single PR),
+   including `appleboy/scp-action` going from `v0.1.7` to `v1.0.0` — a major version bump hidden inside what
+   looked like a routine grouped update.
+2. Merge the PR, then trigger `deploy.yml` (staging or production).
+3. The SCP step fails with `ssh: unable to authenticate`.
+
+**Expected behavior**
+`deploy.yml` copies `docker-compose.yml`/`nginx/`/scripts to the VPS over SCP using the SSH key written to
+`runner.temp`, without error.
+
+**Observed behavior**
+SSH authentication failure on both the staging and production SCP steps, blocking every deployment.
+
+**Analysis / root cause**
+`deploy.yml` hardcoded `key_path: /github/runner_temp/{staging,prod}_key` for the `appleboy/scp-action` step.
+Version `v1.0.0` of that action changed its internal handling of the temp directory, invalidating this hardcoded
+path — while the neighboring `appleboy/ssh-action` step in the same workflow already correctly used the dynamic
+`${{ runner.temp }}` expression instead of a hardcoded path.
+
+**Fix applied**
+Replaced the hardcoded path with `${{ runner.temp }}/{staging,prod}_key` on both the staging and production SCP
+steps, matching what the working `ssh-action` step already did.
+
+**Validation**
+Verified via a real staging deployment plus the full Cypress E2E suite, both green.
+
+**Lesson learned**
+A Dependabot "grouped update" can bundle a major version bump for one dependency inside what otherwise looks like
+a routine minor/patch batch — the PR diff for the workflow file itself showed no red flag, only the version
+number buried in `package`/action references. Worth spot-checking each action's own changelog for major bumps
+before merging a grouped GitHub Actions update, rather than trusting CI green alone (this one broke deployment,
+not the CI checks that ran on the PR itself).
+
+---
+
+## Report 11: Missing `issues: write` permission silently failing the ZAP baseline scan job
+
+**Context**
+- Environment: CI/CD (GitHub Actions, `security-scan.yml`, ZAP Baseline Scan against staging)
+- Repo / commit: `infra`, `4744642` (2026-07-13)
+- Severity: **S3 - Minor** (CI job noise / false alarm — no actual vulnerability was ever at play)
+
+**Steps to reproduce**
+1. Trigger the ZAP Baseline Scan job (`security-scan.yml`) against staging.
+2. The scan itself completes with `FAIL-NEW: 0` (no new blocking findings, only minor `WARN-NEW` items such as
+   CSP/Permissions-Policy headers to harden).
+3. Despite the clean scan result, the job as a whole is reported as failed.
+
+**Expected behavior**
+The job succeeds whenever the ZAP scan itself finds no blocking (`FAIL-NEW`) vulnerabilities.
+
+**Observed behavior**
+The job failed almost systematically, which at first glance looked like a security problem rather than a CI
+plumbing issue.
+
+**Analysis / root cause**
+`zaproxy/action-baseline` tries to file a summary GitHub Issue with the scan results. That call requires
+`issues: write` on the job's `GITHUB_TOKEN`. The job had no explicit `permissions` block (falling back to the
+repo's restricted default), so the issue-creation API call returned a 403
+(`Resource not accessible by integration`), failing the whole job — entirely unrelated to what the scan actually
+found.
+
+**Fix applied**
+Added an explicit `permissions: {contents: read, issues: write}` block to the job in `security-scan.yml`.
+
+**Validation**
+Manually triggered a run on `develop` before merging: success, and the summary GitHub Issue ("ZAP Scan Baseline
+Report") was actually created.
+
+**Lesson learned**
+A red CI job doesn't automatically mean a real vulnerability — worth checking the actual scan output
+(`FAIL-NEW`/`WARN-NEW`) before assuming the worst. What looked like an alarming, systematically-failing security
+scan was really an S3 permissions/plumbing gap, not a finding about the application itself.
+
+---
+
+## Note: `guest_token` column not found (likely already-resolved leftover)
+
+Two related Sentry errors (`Illuminate\Database\QueryException` — `guest_token` column not found on
+`/api/cart/items`, and `Cannot drop index 'carts_user_id_unique'` during a local migration), dated 2026-07-02/03,
+coincide exactly with the creation of the `2026_07_02_213224_make_carts_guest_capable.php` migration. This
+migration already contains the exact fix for the second error (explicit comment: *"MySQL requires dropping the FK
+before dropping the unique index backing it"*), and the `GuestCartTest` suite (7 tests, including usage of
+`guest_token`) is now fully green. Conclusion: most likely residual events from the migration's authoring phase
+(before it was run/fixed on the affected environment), not a still-active issue. No new fix needed — worth
+mentioning in the recette test book as an anomaly detected then resolved (C4.2.1) rather than silently ignored.

@@ -1,31 +1,32 @@
 # GauthierFitness
 
-> Boutique e-commerce de produits fitness, avec vêtements personnalisables via configurateur 3D et génération automatique de designs par IA.
-> La V2 prévoit l'ajout de produits de nutrition sportive et d'équipements fitness personnalisables.
+> Fitness e-commerce store, with clothing customizable via a 3D configurator and automatic AI design generation.
+> V2 will add sports nutrition products and customizable fitness equipment.
 >
 > **Production** → <https://gauthierfitness.fr>
 > **Pre-Production** → <https://staging.gauthierfitness.fr/>
 
 ---
 
-## Composants du projet
+## Project Components
 
-Le projet est séparé en plusieurs répertoires : chaque brique est versionnée dans son propre dépôt GitHub pour cycliser indépendamment ses releases, CI/CD et permissions :
+The project is split across several directories: each piece is versioned in its own GitHub repo so it can
+release, run CI/CD, and manage permissions independently:
 
-| Composant       | Repo                                                                                        | Stack                                                         | Rôle                                                               |
-|-----------------|---------------------------------------------------------------------------------------------|---------------------------------------------------------------|--------------------------------------------------------------------|
-| 🧠 **Backend**  | [gauthierfitness-backend](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend)   | Laravel 13 · PHP 8.3 · MySQL 8 · Sanctum · Stripe · OpenAI    | API REST, paiement, customisation, stock, génération IA            |
-| 🎨 **Frontend** | [gauthierfitness-frontend](https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend) | React 19 · Vite 7 · Konva 2D · Three.js · Zustand · Stripe.js | Boutique, configurateur 3D, back-office admin                      |
-| 🚀 **Infra**    | [gauthierfitness-infra](https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra)       | Docker · Nginx · OVH (2 VPS) · GitHub Actions · Let's Encrypt | Reverse proxy, déploiement staging & production                    |
-| 📖 **Docs**     | [gauthierfitness]                                                                           | Markdown                                                      | Documentation projet transverse, point d'entrée jury / nouveau dev |
+| Component    | Repo                                                                                        | Stack                                                         | Role                                                                   |
+|--------------|---------------------------------------------------------------------------------------------|---------------------------------------------------------------|------------------------------------------------------------------------|
+| **Backend**  | [gauthierfitness-backend](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend)   | Laravel 13 · PHP 8.3 · MySQL 8 · Sanctum · Stripe · OpenAI    | REST API, payment, customization, stock, AI generation                 |
+| **Frontend** | [gauthierfitness-frontend](https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend) | React 19 · Vite 7 · Konva 2D · Three.js · Zustand · Stripe.js | Storefront, 3D configurator, admin back-office                         |
+| **Infra**    | [gauthierfitness-infra](https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra)       | Docker · Nginx · OVH (2 VPS) · GitHub Actions · Let's Encrypt | Reverse proxy, staging & production deployment                         |
+| **Docs**     | [gauthierfitness]                                                                           | Markdown                                                      | Cross-project documentation, entry point for the jury / new developers |
 
 ---
 
-## Vue d'ensemble
+## Overview
 
 ```
                                 ┌────────────────────────────────┐
-                                │  Utilisateur (navigateur)       │
+                                │  User (browser)                 │
                                 └──────────────┬──────────────────┘
                                                │ HTTPS
                                                ▼
@@ -45,43 +46,45 @@ Le projet est séparé en plusieurs répertoires : chaque brique est versionnée
                          │
                          ▼
               ┌──────────────────────────┐    ┌────────────────────┐
-              │  Stripe (paiement)       │    │  OpenAI Images API │
+              │  Stripe (payment)        │    │  OpenAI Images API │
               └──────────────────────────┘    └────────────────────┘
 ```
 
-Pour le schéma détaillé avec les flux critiques (commande personnalisée, webhook Stripe, décrémentation FIFO du stock) → [docs/01-architecture.md](./docs/01-architecture.md#2-vue-densemble--schéma-darchitecture).
+For the detailed diagram with critical flows (custom order, Stripe webhook, FIFO stock decrement) →
+[docs/01-architecture.md](./docs/01-architecture.md#2-system-overview-and-architecture-diagram).
 
 ---
 
 ## Documentation
 
-Cinq documents qui couvrent l'ensemble du cycle de vie du projet :
+Five documents covering the full lifecycle of the project:
 
-| Doc                                                               | Pour qui ?                   | Sujet                                                          |
-|-------------------------------------------------------------------|------------------------------|----------------------------------------------------------------|
-| [01 - Architecture & choix techniques](./docs/01-architecture.md) | Tech lead, jury, futur·e dev | Stack, schéma, OWASP Top 10, accessibilité, durcissement VPS   |
-| [02 - Manuel de déploiement](./docs/02-deployment.md)             | DevOps, mainteneur·euse      | CI/CD GitHub Actions, Docker, OVH, déploiement staging & prod  |
-| [03 - Manuel d'utilisation](./docs/03-user-guide.md)              | Utilisateur final, admin     | Parcours client (achat, customisation, paiement) + back-office |
-| [04 - Manuel de mise à jour](./docs/04-upgrade.md)                | Mainteneur·euse              | Procédure de release, migrations DB, rollback, gestion deps    |
-| [05 - API REST](./docs/05-api.md)                                 | Intégrateur·rice, dev front  | Swagger OpenAPI 3.1, authentification Sanctum, exemples        |
+| Doc                                                                | For whom?                   | Subject                                                           |
+|--------------------------------------------------------------------|-----------------------------|-------------------------------------------------------------------|
+| [01 - Architecture & Technical Choices](./docs/01-architecture.md) | Tech lead, jury, future dev | Stack, diagram, OWASP Top 10, accessibility, VPS hardening        |
+| [02 - Deployment Manual](./docs/02-deployment.md)                  | DevOps, maintainer          | GitHub Actions CI/CD, Docker, OVH, staging & prod deployment      |
+| [03 - User Guide](./docs/03-user-guide.md)                         | End user, admin             | Customer journey (purchase, customization, payment) + back-office |
+| [04 - Upgrade Manual](./docs/04-upgrade.md)                        | Maintainer                  | Release procedure, DB migrations, rollback, dependency management |
+| [05 - REST API](./docs/05-api.md)                                  | Integrator, front-end dev   | Swagger OpenAPI 3.1, Sanctum authentication, examples             |
 
-### Spécification OpenAPI
+### OpenAPI Specification
 
-La spec complète est générée par Scramble dans le repo backend :
+The full spec is generated by Scramble in the backend repo:
 
-➡️ [`gauthierfitness-backend/swagger/openapi.json`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/swagger/openapi.json)
+[
+`gauthierfitness-backend/swagger/openapi.json`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/swagger/openapi.json)
 
-Visualisable en ligne avec un viewer comme [editor.swagger.io](https://editor.swagger.io/) (importer le fichier `openapi.json`).
-En local (sur le backend) : `http://localhost:8000/docs/api` après `php artisan serve`.
+Viewable online with a viewer such as [editor.swagger.io](https://editor.swagger.io/) (import the `openapi.json` file).
+Locally (on the backend): `http://localhost:8000/docs/api` after `php artisan serve`.
 
 ---
 
-## Démarrage rapide
+## Quick Start
 
-Les 4 repos sont **publics** : pas besoin de clé SSH ni de compte GitHub pour les cloner.
+All 4 repos are **public**: no SSH key or GitHub account is needed to clone them.
 
-Pour faire tourner l'ensemble du projet en local, cloner les **3 repos applicatifs** côte à côte. Le backend démarre
-via Docker (recommandé — aucune installation de MySQL en local n'est nécessaire) :
+To run the whole project locally, clone the **3 application repos** side by side. The backend starts via Docker
+(recommended — no local MySQL installation needed):
 
 ```bash
 mkdir gauthierfitness && cd gauthierfitness
@@ -95,68 +98,72 @@ git clone https://github.com/CharlesGAUTHIER1999/gauthierfitness.git docs
 cd backend
 cp .env.example .env
 cp .env.docker.example .env.docker
-docker compose up -d --wait   # attend que MySQL + l'app soient réellement prêts (build inclus au 1er lancement, ~2-4 min)
-docker compose exec app php artisan key:generate --show   # copier la clé affichée dans APP_KEY= de .env.docker
-docker compose up -d --force-recreate app                 # recharge le conteneur avec la nouvelle clé
+docker compose up -d --wait   # waits until MySQL + the app are actually ready (build included on first run, ~2-4 min)
+docker compose exec app php artisan key:generate --show   # copy the displayed key into APP_KEY= in .env.docker
+docker compose up -d --force-recreate app                 # reload the container with the new key
 docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan storage:link
 
 # Frontend (terminal 2)
 cd ../frontend
-cp .env.example .env.local      # remplir VITE_STRIPE_PUBLIC_KEY
+cp .env.example .env.local      # fill in VITE_STRIPE_PUBLIC_KEY
 npm install
 npm run dev
 ```
 
-L'API tourne sur `http://localhost:8000` (health check : `http://localhost:8000/api/health`), le frontend sur
-`http://localhost:5173`, la documentation Swagger sur `http://localhost:8000/docs/api`.
-Alternative sans Docker (nécessite un MySQL local) et détail complet des pré-requis → [docs/02-deployment.md § 3](./docs/02-deployment.md#3-démarrage-local).
+The API runs on `http://localhost:8000` (health check: `http://localhost:8000/api/health`), the frontend on
+`http://localhost:5173`, and the Swagger documentation on `http://localhost:8000/docs/api`.
+Docker-free alternative (requires a local MySQL) and full prerequisite details →
+[docs/02-deployment.md § 3](./docs/02-deployment.md#3-local-startup).
 
 ---
 
-## Remise du projet (zip)
+## Project Submission (zip)
 
-Le code étant réparti sur 4 repos, la remise se fait sous forme d'un **zip unique** régénéré à neuf depuis GitHub
-(garantit que le contenu remis correspond exactement à ce qui est publié, sans fichier local oublié) :
+Since the code is split across 4 repos, the submission is packaged as a **single zip** freshly regenerated from
+GitHub (guarantees the submitted content matches exactly what's published, with no forgotten local file):
 
 ```powershell
-./scripts/build-release-zip.ps1 -Ref main      # ou -Ref v1.0.0 si les repos sont tagués
+./scripts/build-release-zip.ps1 -Ref main      # or -Ref v1.0.0 if the repos are tagged
 ```
 
-Produit `../gauthierfitness-release/gauthierfitness-<ref>.zip`, contenant les 4 repos assemblés (sans historique
-Git). Détail du script → [scripts/build-release-zip.ps1](./scripts/build-release-zip.ps1).
+Produces `../gauthierfitness-release/gauthierfitness-<ref>.zip`, containing the 4 repos assembled together
+(without Git history). Script details → [scripts/build-release-zip.ps1](./scripts/build-release-zip.ps1).
 
 ---
 
-## Convention de branchage
+## Branching Convention
 
-**Repos applicatifs** (`backend`, `frontend`) :
+**Application repos** (`backend`, `frontend`):
 
-- `feature` : `GF{n}-{NomCourt}` (ex : `GF21-SwaggerDoc`, `GF22-Documentation`)
-- `develop` : intégration continue, push → image GHCR `:develop` → staging déployé automatiquement
-- `main` : push → image GHCR `:latest` → déploiement prod **déclenché manuellement** via le workflow `Deploy Pipeline` du repo infra
+- `feature`: `GF{n}-{ShortName}` (e.g.: `GF21-SwaggerDoc`, `GF22-Documentation`)
+- `develop`: continuous integration, push → GHCR image `:develop` → staging deployed automatically
+- `main`: push → GHCR image `:latest` → prod deployment **triggered manually** via the infra repo's
+  `Deploy Pipeline` workflow
 
-**Repo infra** : pas de branches feature, juste `develop` → `main` (PR). Les workflows `deploy.yml` lisent les configs du repo et les poussent en SSH sur les VPS.
-
----
-
-## Couverture du référentiel RNCP 39583
-
-Ce projet a été conçu comme **support de la certification RNCP 39583 « Expert en Développement Logiciel »**. 
-Cette documentation couvre principalement les compétences du **Bloc 2 « Concevoir et développer des applications logicielles »** :
-
-| Compétence                                          | Livrable                                        | Document                                                                                       |
-|-----------------------------------------------------|-------------------------------------------------|------------------------------------------------------------------------------------------------|
-| **C2.1.1** Environnements de déploiement et de test | Protocole de déploiement continu                | [02-deployment.md](./docs/02-deployment.md)                                                    |
-| **C2.1.2** Intégration continue                     | Workflow GitHub Actions                         | [02-deployment.md § CI/CD](./docs/02-deployment.md#5-cicd)                                     |
-| **C2.2.1** Prototype & architecture                 | Architecture structurée, frameworks             | [01-architecture.md](./docs/01-architecture.md)                                                |
-| **C2.2.3** Sécurité & accessibilité                 | OWASP Top 10, OPQUAST, audits Lighthouse        | [01-architecture.md § Sécurité](./docs/01-architecture.md#6-sécurité--couverture-owasp-top-10), rapports [avant](lighthouse/1-avant-correctifs.report.html) / [après](lighthouse/2-apres-correctifs.report.html) correctifs (Home, dev), et rapports [prod](lighthouse/3-prod-home.report.html) sur [Home](lighthouse/3-prod-home.report.html), [configurateur](lighthouse/4-prod-configurateur-apres-fix-csp.report.html) et [checkout](lighthouse/5-prod-checkout.report.html) |
-| **C2.2.4** Déploiement progressif & versioning      | Versioning Git, SemVer                          | [02-deployment.md](./docs/02-deployment.md), [04-upgrade.md](./docs/04-upgrade.md)             |
-| **C2.4.1** Documentation technique d'exploitation   | Manuels déploiement / utilisation / mise à jour | Tout le dossier [`docs/`](./docs/)                                                             |
+**Infra repo**: no feature branches, just `develop` → `main` (PR). The `deploy.yml` workflows read the repo's
+configs and push them over SSH to the VPS.
 
 ---
 
-## Auteur
+## RNCP 39583 Framework Coverage
 
-**Charles Gauthier** - Développeur Fullstack
-📧 charles.gauthier99@gmail.com
+This project was designed as **supporting evidence for the RNCP 39583 certification "Expert in Software
+Development"**. This documentation mainly covers the competencies of **Bloc 2 "Design and Develop Software
+Applications"**:
+
+| Competency                                     | Deliverable                              | Document                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+|------------------------------------------------|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **C2.1.1** Deployment and test environments    | Continuous deployment protocol           | [02-deployment.md](./docs/02-deployment.md)                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **C2.1.2** Continuous integration              | GitHub Actions workflow                  | [02-deployment.md § CI/CD](./docs/02-deployment.md#5-cicd)                                                                                                                                                                                                                                                                                                                                                                                    |
+| **C2.2.1** Prototype & architecture            | Structured architecture, frameworks      | [01-architecture.md](./docs/01-architecture.md)                                                                                                                                                                                                                                                                                                                                                                                               |
+| **C2.2.3** Security & accessibility            | OWASP Top 10, OPQUAST, Lighthouse audits | [01-architecture.md § Security](./docs/01-architecture.md#6-security--owasp-top-10-coverage), before/after fix reports [before](lighthouse/1-avant-correctifs.report.html) / [after](lighthouse/2-apres-correctifs.report.html) (Home, dev), and prod reports on [Home](lighthouse/3-prod-home.report.html), [configurator](lighthouse/4-prod-configurateur-apres-fix-csp.report.html) and [checkout](lighthouse/5-prod-checkout.report.html) |
+| **C2.2.4** Progressive deployment & versioning | Git versioning, SemVer                   | [02-deployment.md](./docs/02-deployment.md), [04-upgrade.md](./docs/04-upgrade.md)                                                                                                                                                                                                                                                                                                                                                            |
+| **C2.4.1** Technical operations documentation  | Deployment / user / upgrade manuals      | The entire [`docs/`](./docs/) folder                                                                                                                                                                                                                                                                                                                                                                                                          |
+
+---
+
+## Author
+
+**Charles Gauthier** - Fullstack Developer
+charles.gauthier99@gmail.com

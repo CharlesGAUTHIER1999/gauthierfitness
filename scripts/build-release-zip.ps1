@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
-  Assemble un zip de remise unique à partir des 4 repos publics GauthierFitness
-  (meta-repo + backend + frontend + infra), clonés à neuf depuis GitHub.
+  Assembles a single submission zip from the 4 public GauthierFitness repos
+  (meta-repo + backend + frontend + infra), freshly cloned from GitHub.
 
 .PARAMETER Ref
-  Branche ou tag à cloner pour les 3 repos applicatifs (backend/frontend/infra).
-  Le meta-repo est toujours cloné sur `main`.
+  Branch or tag to clone for the 3 application repos (backend/frontend/infra).
+  The meta-repo is always cloned from `main`.
 
 .PARAMETER Org
-  Compte/organisation GitHub hébergeant les 4 repos.
+  GitHub account/organization hosting the 4 repos.
 
 .PARAMETER OutDir
-  Dossier de travail où le zip est produit (créé s'il n'existe pas, vidé s'il existe déjà).
+  Working directory where the zip is produced (created if missing, emptied if it already exists).
 
 .EXAMPLE
   ./scripts/build-release-zip.ps1 -Ref v1.0.0

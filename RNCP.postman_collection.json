@@ -8,10 +8,10 @@
   },
   "item": [
     {
-      "name": "Authentification",
+      "name": "Authentication",
       "item": [
         {
-          "name": "Connexion",
+          "name": "Login",
           "event": [
             {
               "listen": "test",
@@ -65,7 +65,7 @@
           "response": []
         },
         {
-          "name": "Inscription",
+          "name": "Register",
           "event": [
             {
               "listen": "test",
@@ -118,7 +118,7 @@
           "response": []
         },
         {
-          "name": "Utilisateur connecté (me)",
+          "name": "Current user (me)",
           "event": [
             {
               "listen": "test",
@@ -163,7 +163,7 @@
           "response": []
         },
         {
-          "name": "Mot de passe oublié",
+          "name": "Forgot password",
           "event": [
             {
               "listen": "test",
@@ -208,12 +208,12 @@
                 "forgot-password"
               ]
             },
-            "description": "Toujours 200 (message générique anti-énumération), même si l'email n'existe pas."
+            "description": "Always 200 (generic anti-enumeration message), even if the email doesn't exist."
           },
           "response": []
         },
         {
-          "name": "Réinitialiser le mot de passe",
+          "name": "Reset password",
           "event": [
             {
               "listen": "test",
@@ -258,12 +258,12 @@
                 "reset-password"
               ]
             },
-            "description": "Le token vient du lien reçu par email (Mailjet/Mailpit en local) — à copier manuellement dans la variable reset_password_token avant d'exécuter cette requête."
+            "description": "The token comes from the link received by email (Mailjet/Mailpit locally) — copy it manually into the reset_password_token variable before running this request."
           },
           "response": []
         },
         {
-          "name": "Déconnexion",
+          "name": "Logout",
           "event": [
             {
               "listen": "test",
@@ -310,10 +310,10 @@
       ]
     },
     {
-      "name": "Catalogue",
+      "name": "Catalog",
       "item": [
         {
-          "name": "Liste des produits",
+          "name": "Product list",
           "event": [
             {
               "listen": "test",
@@ -370,7 +370,7 @@
           "response": []
         },
         {
-          "name": "Détail produit",
+          "name": "Product detail",
           "event": [
             {
               "listen": "test",
@@ -412,10 +412,10 @@
       ]
     },
     {
-      "name": "Personnalisation",
+      "name": "Customization",
       "item": [
         {
-          "name": "Créer une session de personnalisation",
+          "name": "Create a customization session",
           "event": [
             {
               "listen": "test",
@@ -480,7 +480,7 @@
           "response": []
         },
         {
-          "name": "Lire la session de personnalisation",
+          "name": "Read the customization session",
           "event": [
             {
               "listen": "test",
@@ -527,7 +527,7 @@
           "response": []
         },
         {
-          "name": "Modifier une session de personnalisation",
+          "name": "Update a customization session",
           "event": [
             {
               "listen": "test",
@@ -588,7 +588,7 @@
           "response": []
         },
         {
-          "name": "Uploader un logo",
+          "name": "Upload a logo",
           "event": [
             {
               "listen": "test",
@@ -626,7 +626,7 @@
                   "key": "file",
                   "type": "file",
                   "src": [],
-                  "description": "Choisir un fichier PNG/JPG/WEBP (< 3 Mo) avant d'exécuter cette requête."
+                  "description": "Choose a PNG/JPG/WEBP file (< 3 MB) before running this request."
                 }
               ]
             },
@@ -642,12 +642,12 @@
                 "logo"
               ]
             },
-            "description": "Nécessite de sélectionner manuellement un fichier image dans l'onglet Body avant l'envoi (formulaire multipart, pas rejouable tel quel via Newman sans fichier fourni)."
+            "description": "Requires manually selecting an image file in the Body tab before sending (multipart form, not replayable as-is via Newman without a supplied file)."
           },
           "response": []
         },
         {
-          "name": "Uploader une image de design",
+          "name": "Upload a design image",
           "event": [
             {
               "listen": "test",
@@ -685,7 +685,7 @@
                   "key": "file",
                   "type": "file",
                   "src": [],
-                  "description": "Choisir un fichier PNG/JPG/WEBP (< 3 Mo) avant d'exécuter cette requête."
+                  "description": "Choose a PNG/JPG/WEBP file (< 3 MB) before running this request."
                 }
               ]
             },
@@ -701,17 +701,17 @@
                 "image"
               ]
             },
-            "description": "Nécessite de sélectionner manuellement un fichier image dans l'onglet Body avant l'envoi."
+            "description": "Requires manually selecting an image file in the Body tab before sending."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "Panier",
+      "name": "Cart",
       "item": [
         {
-          "name": "Ajouter le produit personnalisé au panier",
+          "name": "Add the customized product to the cart",
           "event": [
             {
               "listen": "test",
@@ -776,7 +776,7 @@
           "response": []
         },
         {
-          "name": "Lire le panier",
+          "name": "Read the cart",
           "event": [
             {
               "listen": "test",
@@ -821,7 +821,7 @@
           "response": []
         },
         {
-          "name": "Modifier la quantité d'une ligne",
+          "name": "Update a line's quantity",
           "event": [
             {
               "listen": "test",
@@ -882,7 +882,7 @@
           "response": []
         },
         {
-          "name": "Supprimer une ligne du panier",
+          "name": "Remove a cart line",
           "event": [
             {
               "listen": "test",
@@ -931,10 +931,10 @@
       ]
     },
     {
-      "name": "Paiement",
+      "name": "Payment",
       "item": [
         {
-          "name": "Créer une intention de paiement",
+          "name": "Create a payment intent",
           "event": [
             {
               "listen": "test",
@@ -1000,10 +1000,10 @@
       ]
     },
     {
-      "name": "Commandes",
+      "name": "Orders",
       "item": [
         {
-          "name": "Lister mes commandes",
+          "name": "List my orders",
           "event": [
             {
               "listen": "test",
@@ -1052,7 +1052,7 @@
           "response": []
         },
         {
-          "name": "Détail d'une commande",
+          "name": "Order detail",
           "event": [
             {
               "listen": "test",
@@ -1098,7 +1098,7 @@
           "response": []
         },
         {
-          "name": "Créer une commande (désactivé)",
+          "name": "Create an order (disabled)",
           "event": [
             {
               "listen": "test",
@@ -1139,17 +1139,17 @@
                 "orders"
               ]
             },
-            "description": "Toujours 405 : une commande se crée uniquement via POST /api/payment/intent (transaction unique commande + paiement + livraison)."
+            "description": "Always 405: an order can only be created via POST /api/payment/intent (a single order + payment + shipment transaction)."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "IA",
+      "name": "AI",
       "item": [
         {
-          "name": "Générer un design IA",
+          "name": "Generate an AI design",
           "event": [
             {
               "listen": "test",
@@ -1208,7 +1208,7 @@
                 "generate"
               ]
             },
-            "description": "Appel réel à l'API OpenAI (gpt-image-1), peut prendre 20-40s. Nécessite que le produit ciblé ait allow_ai_generation=true."
+            "description": "Real call to the OpenAI API (gpt-image-1), can take 20-40s. Requires the target product to have allow_ai_generation=true."
           },
           "response": []
         }
@@ -1218,7 +1218,7 @@
       "name": "Contact",
       "item": [
         {
-          "name": "Envoyer un message de contact",
+          "name": "Send a contact message",
           "event": [
             {
               "listen": "test",
@@ -1269,7 +1269,7 @@
       ]
     },
     {
-      "name": "Divers",
+      "name": "Misc",
       "item": [
         {
           "name": "Health check",
@@ -1307,7 +1307,7 @@
           "response": []
         },
         {
-          "name": "Webhook Stripe (documentation)",
+          "name": "Stripe webhook (documentation)",
           "event": [
             {
               "listen": "test",
@@ -1353,7 +1353,7 @@
                 "webhook"
               ]
             },
-            "description": "Endpoint appelé UNIQUEMENT par Stripe, jamais manuellement : nécessite un header Stripe-Signature valide calculé avec STRIPE_WEBHOOK_SECRET. Pour tester en local, utiliser `stripe listen --forward-to localhost:8000/api/stripe/webhook` (Stripe CLI) plutôt que cette requête, qui sert uniquement à documenter le contrat (400 attendu sans signature valide)."
+            "description": "Endpoint called ONLY by Stripe, never manually: requires a valid Stripe-Signature header computed with STRIPE_WEBHOOK_SECRET. To test locally, use `stripe listen --forward-to localhost:8000/api/stripe/webhook` (Stripe CLI) instead of this request, which is only here to document the contract (400 expected without a valid signature)."
           },
           "response": []
         }
@@ -1363,7 +1363,7 @@
       "name": "Admin",
       "item": [
         {
-          "name": "Connexion admin",
+          "name": "Admin login",
           "event": [
             {
               "listen": "test",
@@ -1412,7 +1412,7 @@
                 "login"
               ]
             },
-            "description": "Utilise un compte ayant le rôle admin. Renseigner admin_email/admin_password dans les variables de collection (jamais de vraies valeurs en clair dans un commit)."
+            "description": "Uses an account with the admin role. Fill in admin_email/admin_password in the collection variables (never real values in plaintext in a commit)."
           },
           "response": []
         },
@@ -1463,7 +1463,7 @@
           "response": []
         },
         {
-          "name": "Statistiques dashboard",
+          "name": "Dashboard statistics",
           "event": [
             {
               "listen": "test",
@@ -1509,10 +1509,10 @@
           "response": []
         },
         {
-          "name": "Produits",
+          "name": "Products",
           "item": [
             {
-              "name": "Lister les produits",
+              "name": "List products",
               "event": [
                 {
                   "listen": "test",
@@ -1558,7 +1558,7 @@
               "response": []
             },
             {
-              "name": "Créer un produit",
+              "name": "Create a product",
               "event": [
                 {
                   "listen": "test",
@@ -1621,7 +1621,7 @@
               "response": []
             },
             {
-              "name": "Détail produit",
+              "name": "Product detail",
               "event": [
                 {
                   "listen": "test",
@@ -1668,7 +1668,7 @@
               "response": []
             },
             {
-              "name": "Modifier un produit",
+              "name": "Update a product",
               "event": [
                 {
                   "listen": "test",
@@ -1729,7 +1729,7 @@
               "response": []
             },
             {
-              "name": "Activer/Désactiver un produit",
+              "name": "Activate/Deactivate a product",
               "event": [
                 {
                   "listen": "test",
@@ -1777,7 +1777,7 @@
               "response": []
             },
             {
-              "name": "Supprimer un produit",
+              "name": "Delete a product",
               "event": [
                 {
                   "listen": "test",
@@ -1826,10 +1826,10 @@
           ]
         },
         {
-          "name": "Commandes",
+          "name": "Orders",
           "item": [
             {
-              "name": "Lister les commandes",
+              "name": "List orders",
               "event": [
                 {
                   "listen": "test",
@@ -1879,7 +1879,7 @@
               "response": []
             },
             {
-              "name": "Détail commande",
+              "name": "Order detail",
               "event": [
                 {
                   "listen": "test",
@@ -1926,7 +1926,7 @@
               "response": []
             },
             {
-              "name": "Changer le statut d'une commande",
+              "name": "Change an order's status",
               "event": [
                 {
                   "listen": "test",
@@ -1993,7 +1993,7 @@
           "name": "Stock",
           "item": [
             {
-              "name": "Vue globale du stock",
+              "name": "Global stock view",
               "event": [
                 {
                   "listen": "test",
@@ -2039,7 +2039,7 @@
               "response": []
             },
             {
-              "name": "Stock d'un produit",
+              "name": "Product stock",
               "event": [
                 {
                   "listen": "test",
@@ -2087,7 +2087,7 @@
               "response": []
             },
             {
-              "name": "Réapprovisionner (créer un lot)",
+              "name": "Restock (create a lot)",
               "event": [
                 {
                   "listen": "test",
@@ -2152,7 +2152,7 @@
               "response": []
             },
             {
-              "name": "Ajuster un lot",
+              "name": "Adjust a lot",
               "event": [
                 {
                   "listen": "test",
@@ -2215,7 +2215,7 @@
               "response": []
             },
             {
-              "name": "Historique des mouvements",
+              "name": "Movement history",
               "event": [
                 {
                   "listen": "test",
@@ -2269,7 +2269,7 @@
           "name": "Support",
           "item": [
             {
-              "name": "Lister les tickets",
+              "name": "List tickets",
               "event": [
                 {
                   "listen": "test",
@@ -2319,7 +2319,7 @@
               "response": []
             },
             {
-              "name": "Détail d'un ticket",
+              "name": "Ticket detail",
               "event": [
                 {
                   "listen": "test",

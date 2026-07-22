@@ -1,66 +1,66 @@
-# 05 - Documentation API REST
+# 05 - REST API Documentation
 
-> Documentation OpenAPI 3.1 générée automatiquement depuis le code backend via **Scramble** (`dedoc/scramble`). Couvre
-> la compétence RNCP **C2.4.1**.
+> OpenAPI 3.1 documentation generated automatically from the backend code via **Scramble** (`dedoc/scramble`).
+> Covers RNCP competency **C2.4.1**.
 
 ---
 
-## 1. Accès à la documentation interactive
+## 1. Accessing the Interactive Documentation
 
-### En local
+### Locally
 
 ```bash
 cd backend
 php artisan serve
 ```
 
-Ouvrir <http://localhost:8000/docs/api> dans le navigateur. Stoplight Elements affiche tous les endpoints groupés par
-domaine fonctionnel avec un **« Try it »** pour tester chaque appel.
+Open <http://localhost:8000/docs/api> in the browser. Stoplight Elements displays all endpoints grouped by
+functional domain, with a **"Try it"** button to test each call.
 
-### En production
+### In production
 
-L'accès est restreint par défaut (middleware `RestrictedDocsAccess` de Scramble) - la doc n'est pas exposée
-publiquement. Pour la consulter en prod :
+Access is restricted by default (Scramble's `RestrictedDocsAccess` middleware) - the docs aren't publicly
+exposed. To view them in prod:
 
-1. Soit en activant l'env local sur le VPS le temps d'une session (déconseillé).
-2. Soit en récupérant le fichier statique `backend/swagger/openapi.json` et en l'ouvrant dans un viewer externe (Swagger
+1. Either temporarily enable the local env on the VPS for a session (not recommended).
+2. Or fetch the static `backend/swagger/openapi.json` file and open it in an external viewer (Swagger
    UI, Stoplight Elements, Postman, Insomnia).
 
 ---
 
-## 2. Spécification OpenAPI
+## 2. OpenAPI Specification
 
-Le fichier de spec versionné est dans le repo backend : [
-`gauthierfitness-backend/swagger/openapi.json`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/swagger/openapi.json).
+The versioned spec file lives in the backend repo:
+[`gauthierfitness-backend/swagger/openapi.json`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/swagger/openapi.json).
 
-Il est régénéré à la demande :
+It's regenerated on demand:
 
 ```bash
 cd backend
 php artisan scramble:export
-# → écrit swagger/openapi.json
+# → writes swagger/openapi.json
 ```
 
-Caractéristiques :
+Characteristics:
 
 - **Format** - OpenAPI 3.1
-- **Endpoints documentés** - 39 opérations sur 32 paths
-- **Sécurité globale** - Bearer Sanctum
-- **Tags** - Authentification, Catalogue, Panier, Customisation, IA, Commandes, Paiement, Contact, Admin - Produits,
-  Admin - Commandes, Admin - Stock, Public
+- **Documented endpoints** - 39 operations across 32 paths
+- **Global security** - Bearer Sanctum
+- **Tags** - Authentication, Catalog, Cart, Customization, AI, Orders, Payment, Contact, Admin - Products,
+  Admin - Orders, Admin - Stock, Public
 
 ---
 
-## 3. Authentification
+## 3. Authentication
 
-Toutes les routes sauf les publiques (`/register`, `/login`, `/products`, `/products/{slug}`, `/contact`, `/health`,
-`/stripe/webhook`) nécessitent un **token Sanctum** :
+All routes except the public ones (`/register`, `/login`, `/products`, `/products/{slug}`, `/contact`, `/health`,
+`/stripe/webhook`) require a **Sanctum token**:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-### Obtenir un token
+### Getting a token
 
 ```bash
 curl -X POST https://api.gauthierfitness.fr/api/login \
@@ -68,7 +68,7 @@ curl -X POST https://api.gauthierfitness.fr/api/login \
   -d '{"email":"alice@example.com","password":"secret"}'
 ```
 
-Réponse :
+Response:
 
 ```json
 {
@@ -83,14 +83,14 @@ Réponse :
 }
 ```
 
-### Utiliser le token
+### Using the token
 
 ```bash
 curl https://api.gauthierfitness.fr/api/me \
   -H "Authorization: Bearer 1|XXXXXXXXXXXXXX..."
 ```
 
-### Révoquer un token
+### Revoking a token
 
 ```bash
 curl -X POST https://api.gauthierfitness.fr/api/logout \
@@ -99,40 +99,40 @@ curl -X POST https://api.gauthierfitness.fr/api/logout \
 
 ---
 
-## 4. Format des réponses
+## 4. Response Format
 
-### Succès
+### Success
 
-JSON, content-type `application/json`, structure dépendant de l'endpoint :
+JSON, content-type `application/json`, structure depends on the endpoint:
 
-- **Ressource simple** - objet sérialisé via API Resource
-- **Collection paginée** - wrapper `{ data: [...], links: {...}, meta: {...} }` (format Laravel par défaut)
-- **Création** - code 201, ressource créée
+- **Single resource** - object serialized via an API Resource
+- **Paginated collection** - `{ data: [...], links: {...}, meta: {...} }` wrapper (Laravel's default format)
+- **Creation** - code 201, created resource
 
-### Erreurs
+### Errors
 
-| Code | Signification                                   | Body                                                   |
-|------|-------------------------------------------------|--------------------------------------------------------|
-| 400  | Requête malformée (ex: panier vide au checkout) | `{ "message": "..." }`                                 |
-| 401  | Token manquant ou invalide                      | `{ "message": "Unauthenticated" }`                     |
-| 403  | Ressource d'un autre utilisateur                | `{}` (corps vide)                                      |
-| 404  | Ressource introuvable                           | `{ "message": "..." }`                                 |
-| 422  | Validation échouée                              | `{ "message": "...", "errors": { "champ": ["..."] } }` |
-| 429  | Throttling (`/contact` limité à 5/min)          | `{ "message": "Too Many Attempts." }`                  |
-| 500  | Erreur serveur                                  | `{ "error": "..." }` (debug=false en prod)             |
+| Code | Meaning                                          | Body                                                   |
+|------|--------------------------------------------------|--------------------------------------------------------|
+| 400  | Malformed request (e.g.: empty cart at checkout) | `{ "message": "..." }`                                 |
+| 401  | Missing or invalid token                         | `{ "message": "Unauthenticated" }`                     |
+| 403  | Resource belongs to another user                 | `{}` (empty body)                                      |
+| 404  | Resource not found                               | `{ "message": "..." }`                                 |
+| 422  | Validation failed                                | `{ "message": "...", "errors": { "field": ["..."] } }` |
+| 429  | Throttling (`/contact` limited to 5/min)         | `{ "message": "Too Many Attempts." }`                  |
+| 500  | Server error                                     | `{ "error": "..." }` (debug=false in prod)             |
 
 ---
 
-## 5. Exemples d'intégration
+## 5. Integration Examples
 
-### Lister les produits avec axios (JS)
+### Listing products with axios (JS)
 
 ```js
 import axios from 'axios';
 
 const api = axios.create({
-    // En dev, VITE_API_URL est vide → axios tape /api en relatif, le proxy Vite redirige vers Laravel.
-    // En staging/prod, VITE_API_URL = "https://api.gauthierfitness.fr/api".
+    // In dev, VITE_API_URL is empty → axios hits /api relatively, the Vite proxy redirects to Laravel.
+    // In staging/prod, VITE_API_URL = "https://api.gauthierfitness.fr/api".
     baseURL: import.meta.env.VITE_API_URL || '/api',
     headers: {Accept: 'application/json'},
 });
@@ -140,11 +140,11 @@ const api = axios.create({
 const {data} = await api.get('/products', {
     params: {per_page: 24, gender: 'homme', tag: 'new'}
 });
-console.log(data.data);    // tableau de produits
+console.log(data.data);    // array of products
 console.log(data.meta);    // pagination
 ```
 
-### Créer un PaymentIntent (parcours checkout)
+### Creating a PaymentIntent (checkout flow)
 
 ```js
 const {data} = await api.post('/payment/intent', {
@@ -161,49 +161,49 @@ const {data} = await api.post('/payment/intent', {
     headers: {Authorization: `Bearer ${token}`},
 });
 
-// data.client_secret à passer à stripe.confirmCardPayment()
+// data.client_secret is passed to stripe.confirmCardPayment()
 ```
 
-### Recevoir un webhook Stripe (côté backend, PHP)
+### Receiving a Stripe webhook (backend side, PHP)
 
-L'API expose `POST /api/stripe/webhook` - non documenté ici car il s'agit d'un endpoint serveur-à-serveur appelé par
-Stripe avec une signature HMAC. Voir [
-`StripeController::webhook`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/app/Http/Controllers/Payments/StripeController.php)
-pour le détail de la vérification (`Webhook::constructEvent`).
+The API exposes `POST /api/stripe/webhook` - not documented here since it's a server-to-server endpoint called by
+Stripe with an HMAC signature. See
+[`StripeController::webhook`](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend/blob/develop/app/Http/Controllers/Payments/StripeController.php)
+for the verification details (`Webhook::constructEvent`).
 
 ---
 
-## 6. Évolutions de l'API
+## 6. API Evolution
 
 ### Versioning
 
-L'API n'est pas préfixée par version (`/api/v1/...`) pour l'instant. La version est portée par `API_VERSION` dans la
-spec OpenAPI. Si une refonte majeure est nécessaire, la migration se fera vers `/api/v2/...` avec coexistence de la v1
-pendant 6 mois.
+The API isn't version-prefixed (`/api/v1/...`) for now. The version is carried by `API_VERSION` in the OpenAPI
+spec. If a major overhaul becomes necessary, the migration will move to `/api/v2/...` with v1 coexisting for
+6 months.
 
-### Politique de dépréciation
+### Deprecation policy
 
-- Un endpoint déprécié est marqué `@deprecated` dans son docblock — il apparaît barré dans la doc Swagger.
-- Délai minimum **3 mois** entre la dépréciation et le retrait.
-- Annonce dans le CHANGELOG (cf. [04-upgrade.md](./04-upgrade.md)) avec date cible.
+- A deprecated endpoint is marked `@deprecated` in its docblock — it appears struck through in the Swagger docs.
+- Minimum **3-month** delay between deprecation and removal.
+- Announced in the CHANGELOG (cf. [04-upgrade.md](./04-upgrade.md)) with a target date.
 
-### Changements cassants
+### Breaking changes
 
-- Tout breaking change incrémente la **MAJOR** de la spec (`v1.X.X` → `v2.0.0`).
-- Diffusion d'un email aux intégrateurs connus avant publication.
+- Any breaking change bumps the **MAJOR** version of the spec (`v1.X.X` → `v2.0.0`).
+- An email is sent to known integrators before publishing.
 
 ---
 
-## 7. Quand mettre à jour la doc ?
+## 7. When to Update the Docs
 
-La doc est **générée du code** - il n'y a rien à maintenir à la main pour la structure des endpoints. En revanche, il
-faut **mettre à jour les annotations PHPDoc** des controllers à chaque fois que :
+The docs are **generated from the code** - there's nothing to maintain by hand for endpoint structure. However,
+the **PHPDoc annotations** on controllers must be updated whenever:
 
-- Un endpoint est ajouté / supprimé
-- Une nouvelle réponse d'erreur est gérée
-- Le contrat d'un endpoint change (paramètre ajouté, format de réponse modifié)
+- An endpoint is added / removed
+- A new error response is handled
+- An endpoint's contract changes (parameter added, response format changed)
 
-Et **régénérer** :
+And then **regenerate**:
 
 ```bash
 cd backend
@@ -212,7 +212,7 @@ git add swagger/openapi.json
 git commit -m "docs(api): regen openapi spec"
 ```
 
-Idéalement, on branche un check CI qui régénère et vérifie l'absence de diff non commitée :
+Ideally, wire up a CI check that regenerates and verifies there's no uncommitted diff:
 
 ```yaml
 # .github/workflows/ci-cd.yml

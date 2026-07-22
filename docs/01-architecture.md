@@ -1,31 +1,31 @@
-# 01 - Architecture & choix techniques
+# 01 - Architecture & Technical Choices
 
-> Document de référence pour comprendre **comment** et **pourquoi** GauthierFitness est conçue ainsi.
-> Couvre les compétences RNCP **C2.2.1** (architecture et prototype), **C2.2.3** (sécurité, accessibilité) et **C2.4.1
-** (documentation des choix techniques).
-
----
-
-## 1. Vision Produit
-
-GauthierFitness est une boutique e-commerce spécialisée dans les produits fitness (vêtements, accessoires, nutrition),
-qui se différencie par **la personnalisation produit** :
-
-- Éditeur **3D** (Three.js + React-Three-Fiber) pour configurer un vêtement (t-shirt, veste, sweat), et visualiser le
-  produit fini.
-- **Génération de design assistée par IA** (OpenAI Images) à partir d'un prompt texte.
-- Suivi de **stock par lot** avec FIFO sur les produits périssables (nutrition).
-
-L'enjeu technique principal est de relier de manière cohérente : un éditeur graphique (état complexe côté front) → une
-session de personnalisation persistée (snapshot côté back) → une commande Stripe → un suivi logistique.
+> Reference document to understand **how** and **why** GauthierFitness is designed this way.
+> Covers RNCP competencies **C2.2.1** (architecture and prototype), **C2.2.3** (security, accessibility) and **C2.4.1**
+> (documentation of technical choices).
 
 ---
 
-## 2. Vue d'ensemble - schéma d'architecture
+## 1. Product Vision
+
+GauthierFitness is an e-commerce store specialized in fitness products (clothing, accessories, nutrition, equipments),
+differentiated by **product personalization**:
+
+- **3D** editor (Three.js + React-Three-Fiber) to configure a garment (t-shirt, jacket, hoodie), and preview the
+  finished product.
+- **AI-assisted design generation** (OpenAI Images) from a text prompt.
+- **Lot-based stock** tracking with FIFO on perishable products (nutrition).
+
+The main technical challenge is to consistently link together : a graphical editor (complex front-end state) → a
+persisted customization session (back-end snapshot) → a Stripe order → logistics tracking.
+
+---
+
+## 2. System Overview and Architecture Diagram
 
 ```
                                 ┌────────────────────────────────┐
-                                │  Utilisateur (navigateur)       │
+                                │  User (browser)                 │
                                 └──────────────┬──────────────────┘
                                                │ HTTPS
                                                ▼
@@ -37,9 +37,9 @@ session de personnalisation persistée (snapshot côté back) → une commande S
               ┌──────────────────────┐  ┌────────────────────────┐
               │  Frontend React 19    │  │  Backend Laravel 13      │
               │  (Vite build, SPA)    │  │  (PHP-FPM 8.3, Sanctum)  │
-              │  - Boutique           │  │  - API REST /api/*       │
-              │  - Éditeur 3D Three   │  │  - Génération IA         │
-              │  - Admin panel        │  │  - Décrémentation stocks │
+              │  - Storefront          │  │  - REST API /api/*       │
+              │  - 3D editor (Three)  │  │  - AI generation         │
+              │  - Admin panel        │  │  - Stock decrement        │
               └──────────┬────────────┘  └─────────┬────────────────┘
                          │ axios + Bearer token    │
                          │                         ▼
@@ -51,74 +51,74 @@ session de personnalisation persistée (snapshot côté back) → une commande S
                          │              │  - webhook_events       │
                          │              └────────────────────────┘
                          │
-                         │ Webhooks asynchrones
+                         │ Asynchronous webhooks
                          ▼
               ┌──────────────────────────┐    ┌────────────────────┐
-              │  Stripe (paiement)       │    │  OpenAI Images API │
-              │  PaymentIntents + WH     │    │  Génération design │
+              │  Stripe (payment)        │    │  OpenAI Images API │
+              │  PaymentIntents + WH     │    │  Design generation │
               └──────────────────────────┘    └────────────────────┘
 ```
 
-### Flux critique - commande personnalisée
+### Critical flow - custom order
 
-1. **Front** - Utilisateur compose son design dans l'éditeur 3D → `POST /api/customization/sessions` snapshote la
+1. **Front** - The user builds their design in the 3D editor → `POST /api/customization/sessions` snapshots the
    configuration.
-2. **Front** - Ajout au panier → `POST /api/cart/items` avec `custom_product_session_id`.
-3. **Front** - Checkout → `POST /api/payment/intent` crée la commande, le `Payment` (pending), un `Shipment` structuré,
-   puis appelle Stripe pour obtenir un `client_secret`.
-4. **Front** - Confirmation côté client via Stripe.js avec le `client_secret`.
-5. **Back** - Webhook Stripe `payment_intent.succeeded` → marque commande/paiement comme payés, **vide le panier**, *
-   *envoie l'email** de confirmation, **décrémente le stock en FIFO** (lot expirant le plus tôt en premier), tout dans
-   une transaction DB.
-6. **Admin** - Suit la commande dans le back-office et change le statut (`shipped`, `delivered`) → emails automatiques
-   au client.
+2. **Front** - Add to cart → `POST /api/cart/items` with `custom_product_session_id`.
+3. **Front** - Checkout → `POST /api/payment/intent` creates the order, the `Payment` (pending), a structured
+   `Shipment`, then calls Stripe to obtain a `client_secret`.
+4. **Front** - Client-side confirmation via Stripe.js with the `client_secret`.
+5. **Back** - Stripe webhook `payment_intent.succeeded` → marks order/payment as paid, **empties the cart**, **sends the
+   confirmation email**, **decrements stock in FIFO order** (earliest-expiring lot first), all within a single DB
+   transaction.
+6. **Admin** - Tracks the order in the back-office and changes its status (`shipped`, `delivered`) → automatic emails to
+   the customer.
 
 ---
 
-## 3. Stack technique - choix et justifications
+## 3. Technical Stack - Choices and Rationale
 
 ### Backend - Laravel 13 / PHP 8.3
 
-| Brique            | Choix                           | Pourquoi                                                                                                                                         |
-|-------------------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| Framework         | **Laravel 13**                  | Maturité, ORM Eloquent, écosystème (Sanctum, Notifications, Queue, Mail), documentation excellente, ergonomie de développement pour un dev solo. |
-| Auth API          | **Sanctum** (token Bearer)      | Plus simple qu'OAuth2 pour une SPA mono-domaine. Tokens stockés en DB, révocables individuellement. Une session = un token nommé `react`.        |
-| Base de données   | **MySQL 8**                     | Stable, support natif des JSON columns (utilisé pour `configuration` des sessions de customisation), facile à exploiter chez OVH.                |
-| Paiement          | **Stripe** (PaymentIntents)     | Standard de l'industrie, support 3D-Secure natif, webhooks signés, conformité PCI déléguée.                                                      |
-| IA images         | **OpenAI Images**               | Qualité supérieure pour les designs textile, latence acceptable (~6-8s), facturation à l'usage.                                                  |
-| Documentation API | **Scramble** (`dedoc/scramble`) | Génère l'OpenAPI 3.1 directement depuis les controllers, FormRequests et Resources. Pas de duplication entre code et doc.                        |
-| Tests             | **PHPUnit 11**                  | Standard Laravel, SQLite in-memory en CI pour la rapidité.                                                                                       |
-| Qualité code      | **Laravel Pint** (PSR-12)       | Linter officiel Laravel, vérifié en CI.                                                                                                          |
+| Component         | Choice                          | Why                                                                                                                                    |
+|-------------------|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| Framework         | **Laravel 13**                  | Maturity, Eloquent ORM, ecosystem (Sanctum, Notifications, Queue, Mail), excellent documentation, developer ergonomics for a solo dev. |
+| API Auth          | **Sanctum** (Bearer token)      | Simpler than OAuth2 for a single-domain SPA. Tokens stored in DB, individually revocable. One session = one token named `react`.       |
+| Database          | **MySQL 8**                     | Stable, native JSON column support (used for the `configuration` of customization sessions), easy to operate on OVH.                   |
+| Payment           | **Stripe** (PaymentIntents)     | Industry standard, native 3D-Secure support, signed webhooks, PCI compliance delegated.                                                |
+| AI images         | **OpenAI Images**               | Superior quality for textile designs, acceptable latency (~6-8s), pay-per-use billing.                                                 |
+| API documentation | **Scramble** (`dedoc/scramble`) | Generates the OpenAPI 3.1 spec directly from controllers, FormRequests and Resources. No duplication between code and docs.            |
+| Tests             | **PHPUnit 11**                  | Laravel standard, SQLite in-memory in CI for speed.                                                                                    |
+| Code quality      | **Laravel Pint** (PSR-12)       | Official Laravel linter, checked in CI.                                                                                                |
 
 ### Frontend - React 19 / Vite 7
 
-| Brique       | Choix                                        | Pourquoi                                                                                                |
-|--------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| Framework UI | **React 19**                                 | Écosystème mature pour SPA, hooks pour la composition, Suspense pour le data fetching.                  |
-| Build        | **Vite 7**                                   | HMR ultra-rapide, ESM natif, bien plus rapide que Webpack pour un projet de cette taille.               |
-| Routing      | **React-router-dom 7**                       | Standard de fait, file-based routing possible si on monte en complexité.                                |
-| State global | **Zustand 5**                                | Plus léger et moins verbeux que Redux. Suffit pour panier, auth, customisation.                         |
-| HTTP         | **Axios**                                    | Intercepteurs (auth, refresh), gestion d'erreurs centralisée, plus ergonomique que `fetch` pour ce cas. |
-| Éditeur 2D   | **Konva** + `react-konva`                    | Performance canvas, API drag/transform/snapping prête à l'emploi, export PNG natif pour les previews.   |
-| Éditeur 3D   | **Three.js** + `@react-three/fiber` + `drei` | Standard 3D web, intégration React idiomatique, helpers `drei` (OrbitControls, Environment, etc.).      |
-| Paiement     | **@stripe/react-stripe-js** + Elements       | Composants officiels, conformité PCI, gestion 3D-Secure automatique.                                    |
-| Icônes       | **React-icons**                              | Une seule lib, importation par module pour optimiser le bundle.                                         |
+| Component    | Choice                                       | Why                                                                                                         |
+|--------------|----------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| UI framework | **React 19**                                 | Mature ecosystem for SPAs, hooks for composition, Suspense for data fetching.                               |
+| Build        | **Vite 7**                                   | Ultra-fast HMR, native ESM, much faster than Webpack for a project this size.                               |
+| Routing      | **React-router-dom 7**                       | De facto standard, file-based routing possible if complexity grows.                                         |
+| Global state | **Zustand 5**                                | Lighter and less verbose than Redux. Sufficient for cart, auth, customization.                              |
+| HTTP         | **Axios**                                    | Interceptors (auth, refresh), centralized error handling, more ergonomic than `fetch` for this use case.    |
+| 2D editor    | **Konva** + `react-konva`                    | Canvas performance, ready-to-use drag/transform/snapping API, native PNG export for previews.               |
+| 3D editor    | **Three.js** + `@react-three/fiber` + `drei` | Standard for 3D on the web, idiomatic React integration, `drei` helpers (OrbitControls, Environment, etc.). |
+| Payment      | **@stripe/react-stripe-js** + Elements       | Official components, PCI compliance, automatic 3D-Secure handling.                                          |
+| Icons        | **React-icons**                              | A single library, per-module import to optimize the bundle.                                                 |
 
 ### Infra - Docker + OVH
 
-| Brique           | Choix                                                  | Pourquoi                                                                         |
-|------------------|--------------------------------------------------------|----------------------------------------------------------------------------------|
-| Conteneurisation | **Docker** multi-stage (vendor → production / testing) | Image PHP-FPM Alpine légère (~80 Mo), reproductibilité dev/staging/prod.         |
-| Reverse proxy    | **Nginx** Alpine                                       | TLS, compression gzip, gestion des fichiers statiques, cache.                    |
-| Hébergement      | **2 VPS OVH** (staging + production)                   | Bon rapport perf/prix, datacenter France (RGPD), maîtrise totale de l'hôte.      |
-| Registry         | **GHCR** (GitHub Container Registry)                   | Intégré au workflow GitHub Actions, gratuit pour le repo public/privé.           |
-| CI/CD            | **GitHub Actions**                                     | PHPUnit + Pint + build d'image + déclenchement deploy via `repository-dispatch`. |
-| DNS              | **OVH**                                                | Géré dans le même panel que les VPS, sous-domaines API et front séparés.         |
-| TLS              | **Let's Encrypt** (Certbot)                            | Renouvellement automatique, gratuit, accepté universellement.                    |
+| Component        | Choice                                                 | Why                                                                                 |
+|------------------|--------------------------------------------------------|-------------------------------------------------------------------------------------|
+| Containerization | **Docker** multi-stage (vendor → production / testing) | Lightweight Alpine PHP-FPM image (~80 MB), reproducibility across dev/staging/prod. |
+| Reverse proxy    | **Nginx** Alpine                                       | TLS, gzip compression, static file serving, caching.                                |
+| Hosting          | **2 OVH VPS** (staging + production)                   | Good perf/price ratio, France datacenter (GDPR), full control over the host.        |
+| Registry         | **GHCR** (GitHub Container Registry)                   | Integrated with the GitHub Actions workflow, free for public/private repos.         |
+| CI/CD            | **GitHub Actions**                                     | PHPUnit + Pint + image build + deploy trigger via `repository-dispatch`.            |
+| DNS              | **OVH**                                                | Managed in the same panel as the VPS, separate API and front subdomains.            |
+| TLS              | **Let's Encrypt** (Certbot)                            | Automatic renewal, free, universally accepted.                                      |
 
 ---
 
-## 4. Modèle de données - entités clés
+## 4. Data Model - Key Entities
 
 ```
 users ─┬──< designs ──< design_assets
@@ -134,104 +134,106 @@ products ─┬──< product_options
 webhook_events ──< webhook_event_failures
 ```
 
-### Points d'attention
+### Points of attention
 
-- **Snapshot des prix** - `cart_items` et `order_items` portent le prix au moment de l'ajout / commande pour éviter
-  qu'un changement de prix produit ne réécrive l'historique. Les `custom_product_sessions` portent aussi un
-  `unit_price_snapshot`.
-- **Stock par lot** - Chaque entrée en stock crée un `stock_lot` (numéro de lot, quantité initiale, date d'expiration).
-  Les sorties (ventes) sont tracées dans `stock_movements` avec un FIFO sur l'expiration la plus proche.
-- **Idempotence des webhooks** - `webhook_events` indexe `(provider, provider_event_id)` en unique pour rejouer sans
-  dupliquer le traitement. En cas d'erreur, le retry compte est tracé via `webhook_event_failures`.
-- **Soft state des sessions** - Les `custom_product_sessions` transitent par `draft → ready → added_to_cart → ordered`,
-  ce qui permet à l'utilisateur de continuer une customisation en cours.
+- **Price snapshotting** - `cart_items` and `order_items` carry the price at the time of adding / ordering to avoid a
+  product price change rewriting history. `custom_product_sessions` also carry a `unit_price_snapshot`.
+- **Lot-based stock** - Each stock intake creates a `stock_lot` (lot number, initial quantity, expiration date).
+  Outgoing movements (sales) are tracked in `stock_movements` with FIFO on the nearest expiration date.
+- **Webhook idempotency** - `webhook_events` uniquely indexes `(provider, provider_event_id)` to replay without
+  duplicating processing. On error, the retry count is tracked via `webhook_event_failures`.
+- **Session soft state** - `custom_product_sessions` transition through `draft → ready → added_to_cart → ordered`, which
+  lets the user resume an in-progress customization.
 
 ---
 
-## 5. Conventions et bonnes pratiques
+## 5. Conventions and Best Practices
 
 ### Code
 
-- **PSR-12** côté PHP, enforced par Pint (`./vendor/bin/pint --test` en CI).
-- **ESLint 9** côté JS, config flat dans `eslint.config.js`.
-- **Type hints PHP** systématiques (params, retours) — c'est ce qui permet à Scramble de générer la doc OpenAPI.
-- **FormRequest** pour la validation côté API quand la logique de validation dépasse 3 règles ou demande une
-  vérification croisée (cf. `AddToCartRequest::withValidator` qui vérifie l'appartenance d'une session de
-  customisation).
-- **API Resources** (`ProductResource`, `CartResource`, etc.) pour découpler la réponse JSON de la structure interne des
-  modèles.
+- **PSR-12** on the PHP side, enforced by Pint (`./vendor/bin/pint --test` in CI).
+- **ESLint 9** on the JS side, flat config in `eslint.config.js`.
+- **Systematic PHP type hints** (params, returns) - this is what lets Scramble generate the OpenAPI docs.
+- **FormRequest** for API-side validation whenever the validation logic exceeds 3 rules or requires cross-field checks (
+  cf. `AddToCartRequest::withValidator`, which verifies ownership of a customization session).
+- **API Resources** (`ProductResource`, `CartResource`, etc.) to decouple the JSON response from the internal model
+  structure.
 
 ### Git
 
-Convention de branchage : `GF{n}-{NomCourt}` où `{n}` est un numéro de feature et `{NomCourt}` une description en
-CamelCase.
+Branching convention: `GF{n}-{ShortName}` where `{n}` is a feature number and `{ShortName}` a CamelCase description.
 
-Exemples : `GF21-SwaggerDoc`, `GF15-TestsE2E`.
+Examples: `GF21-SwaggerDoc`, `GF15-TestsE2E`.
 
-Workflow :
+Workflow:
 
-- `feature` → `develop` (déploie sur staging automatiquement après CI verte)
-- `develop` → `main` (déploie sur production après gate manuelle)
+- `feature` → `develop` (auto-deploys to staging after green CI)
+- `develop` → `main` (deploys to production after a manual gate)
 
-Backend et frontend ont des dépôts distincts sur GitHub mais sont versionnés avec la même nomenclature de branches pour
-rester cohérents.
+Backend and frontend have separate GitHub repos but are versioned with the same branch naming convention to stay
+consistent.
 
 ### Tests
 
-- **Tests Feature** (PHPUnit) pour chaque endpoint API critique (auth, panier, paiement, customisation).
-- **SQLite in-memory** en CI pour un cycle test rapide (~30 s).
-- **Tests E2E Playwright** branchés dans le pipeline `infra/.github/workflows/deploy.yml` (job `e2e`, joué contre
-  staging après chaque déploiement automatique). Specs dans `infra/e2e/tests/`.
+- **Feature tests** (PHPUnit) for every critical API endpoint (auth, cart, payment, customization).
+- **SQLite in-memory** in CI for a fast test cycle (~30s).
+- **Playwright E2E tests** wired into the `infra/.github/workflows/deploy.yml` pipeline (`e2e` job, run against
+  staging after every automatic deployment). Specs in `infra/e2e/tests/`.
 
 ---
 
-## 6. Sécurité - couverture OWASP Top 10
+## 6. Security - OWASP Top 10 Coverage
 
-| Risque                                   | Mesures en place                                                                                                                                                                                                         |
-|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **A01 - Broken Access Control**          | Sanctum + middleware `auth:sanctum` sur toutes les routes protégées. Middleware `admin` custom pour le back-office. Vérifications d'appartenance explicites (`abort_unless($order->user_id === ...)`).                   |
-| **A02 - Cryptographic Failures**         | TLS Let's Encrypt sur tous les sous-domaines. `bcrypt` pour les passwords (`Hash::make`). Secrets dans `.env` non commité.                                                                                               |
-| **A03 - Injection**                      | Eloquent (PDO préparé) systématique. Pas de `DB::raw()` avec input utilisateur. Validation FormRequest avec règles `exists` pour les FK.                                                                                 |
-| **A04 - Insecure Design**                | Snapshot des prix à l'ajout au panier (impossible de modifier un prix après commande). Idempotence stricte des webhooks Stripe (table `webhook_events`). Transactions DB sur les opérations critiques (paiement, stock). |
-| **A05 - Security Misconfiguration**      | `APP_DEBUG=false` en prod. CORS configuré pour le domaine front uniquement. Headers de sécurité Nginx (HSTS, X-Frame-Options, X-Content-Type-Options).                                                                   |
-| **A06 - Vulnerable Components**          | `composer audit` et `npm audit` en CI. Dependabot activé sur les deux repos. Laravel 13 et React 19 sur les dernières versions stables.                                                                                  |
-| **A07 - Identification & Auth Failures** | Throttling sur les routes sensibles (`throttle:5,1` sur `/contact`). Rotation du token Sanctum à chaque login (un seul token actif par user).                                                                            |
-| **A08 - Software & Data Integrity**      | Signature Stripe (`Webhook::constructEvent`) avec `STRIPE_WEBHOOK_SECRET`. Images Docker signées via GHCR.                                                                                                               |
-| **A09 - Security Logging & Monitoring**  | Logs Laravel (`storage/logs/`) + `Log::info('STRIPE_WEBHOOK_RECEIVED', ...)` sur les événements critiques. À renforcer avec Sentry (cf. [04-upgrade.md](./04-upgrade.md)).                                               |
-| **A10 - SSRF**                           | Pas d'entrée utilisateur dans des URLs serveur-side hors OpenAI (URL fixée en config).                                                                                                                                   |
+| Risk                                     | Measures in place                                                                                                                                                                                         |
+|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **A01 - Broken Access Control**          | Sanctum + `auth:sanctum` middleware on all protected routes. Custom `admin` middleware for the back-office. Explicit ownership checks (`abort_unless($order->user_id === ...)`).                          |
+| **A02 - Cryptographic Failures**         | Let's Encrypt TLS on every subdomain. `bcrypt` for passwords (`Hash::make`). Secrets in an uncommitted `.env`.                                                                                            |
+| **A03 - Injection**                      | Eloquent (prepared PDO) systematically. No `DB::raw()` with user input. FormRequest validation with `exists` rules for FKs.                                                                               |
+| **A04 - Insecure Design**                | Price snapshotting when added to cart (a price can't be changed after ordering). Strict idempotency of Stripe webhooks (`webhook_events` table). DB transactions on critical operations (payment, stock). |
+| **A05 - Security Misconfiguration**      | `APP_DEBUG=false` in prod. CORS configured for the front domain only. Nginx security headers (HSTS, X-Frame-Options, X-Content-Type-Options).                                                             |
+| **A06 - Vulnerable Components**          | `composer audit` and `npm audit` in CI. Dependabot enabled on both repos. Laravel 13 and React 19 on the latest stable versions.                                                                          |
+| **A07 - Identification & Auth Failures** | Throttling on sensitive routes (`throttle:5,1` on `/contact`). Sanctum token rotation on every login (a single active token per user).                                                                    |
+| **A08 - Software & Data Integrity**      | Stripe signature (`Webhook::constructEvent`) with `STRIPE_WEBHOOK_SECRET`. Docker images signed via GHCR.                                                                                                 |
+| **A09 - Security Logging & Monitoring**  | Laravel logs (`storage/logs/`) + `Log::info('STRIPE_WEBHOOK_RECEIVED', ...)` on critical events. To be strengthened with Sentry (cf. [04-upgrade.md](./04-upgrade.md)).                                   |
+| **A10 - SSRF**                           | No user input in server-side URLs outside of OpenAI (URL fixed in config).                                                                                                                                |
 
-### Durcissement VPS (suite à incident ransomware staging — mai 2026)
+### VPS hardening (following the staging ransomware incident - May 2026)
 
-- **Port MySQL (3306) fermé** depuis l'extérieur — accessible uniquement via le réseau Docker interne.
-- **SSH** : authentification par clé uniquement (PasswordAuthentication no), root login désactivé, port non standard.
-- **UFW** activé : seuls 22 (SSH), 80 (HTTP→redirect HTTPS) et 443 (HTTPS) ouverts.
-- **Backups** : dump MySQL chiffré quotidien stocké hors VPS.
-
----
-
-## 7. Accessibilité — référentiel OPQUAST
-
-Le projet vise le **niveau OPQUAST « Qualité Web »** (240 critères) plutôt que le RGAA, plus adapté à un e-commerce qu'à
-un site public.
-
-Mesures appliquées :
-
-- **Contraste** - Palette validée contre WCAG AA (ratio ≥ 4.5:1 pour les textes).
-- **Navigation clavier** - Tous les éléments interactifs sont `tabindex`-able, focus visible (outline préservé).
-- **Sémantique HTML** - `<button>` pour les actions, `<a>` pour la navigation, `<form>` avec `<label>` associés.
-- **Images** - `alt` systématique sur les produits, `alt=""` sur les images purement décoratives.
-- **Responsive** - Mobile-first, breakpoints à 640 / 1024 / 1280 px.
-- **Erreurs de formulaire** - Messages affichés sous le champ concerné, jamais en alerte modale.
-- **Édition de design** - L'éditeur propose un mode « formulaire » alternatif (champs texte + sélecteurs) pour les
-  personnes ne pouvant pas utiliser la manipulation drag-and-drop ou la navigation 3D.
+- **MySQL port (3306) closed** from the outside — accessible only via the internal Docker network.
+- **SSH**: key-only authentication (PasswordAuthentication no), root login disabled, non-standard port.
+- **UFW** enabled: only 22 (SSH), 80 (HTTP→redirect HTTPS) and 443 (HTTPS) open.
+- **Backups**: daily encrypted MySQL dump stored off the VPS.
 
 ---
 
-## 8. Limites connues et axes d'évolution
+## 7. Accessibility - OPQUAST Framework
 
-- **Pas de monitoring applicatif** en production - un Sentry ou équivalent est planifié (
+The project targets the **OPQUAST "Web Quality" level** (240 criteria) rather than RGAA, which is better suited to an
+e-commerce site than a public-sector site.
+
+Measures applied:
+
+- **Contrast** - Palette validated against WCAG AA (ratio ≥ 4.5:1 for text).
+- **Keyboard navigation** - All interactive elements are `tabindex`-able, focus visible (outline preserved).
+- **HTML semantics** - `<button>` for actions, `<a>` for navigation, `<form>` with associated `<label>`s.
+- **Images** - Systematic `alt` on products, `alt=""` on purely decorative images.
+- **Responsive** - Mobile-first, breakpoints at 640 / 1024 / 1280 px.
+- **Form errors** - Messages displayed under the relevant field, never as a modal alert.
+- **Design editing** - The editor offers an alternative "form" mode (text fields + selectors) for people who
+  cannot use drag-and-drop manipulation or 3D navigation.
+
+---
+
+## 8. Known Limitations and Evolution Areas
+
+- **No application monitoring** in production - Sentry or an equivalent is planned (
   cf. [04-upgrade.md](./04-upgrade.md)).
-- **Pas de queue worker dédié** - les notifications partent en sync, OK pour le volume actuel mais à externaliser quand
-  le volume augmentera.
-- **Pas de CDN** sur les assets - Nginx gère les statiques, suffisant tant que le trafic reste régional.
-- **Couverture E2E partielle** - auth + admin couverts, parcours d'achat complet à enrichir (cf. `infra/e2e/tests/`).
+- **No dedicated queue worker** - notifications are sent synchronously, fine for the current volume but to be
+  externalized as volume grows.
+- **No CDN** on assets - Nginx serves the static files, sufficient as long as traffic stays regional.
+- **Partial E2E coverage** - auth + admin covered, full purchase journey to be expanded (cf. `infra/e2e/tests/`).
+- **No manual resize for uploaded/AI-generated images in the 3D configurator** - logos, free images, and AI
+  designs can be repositioned by drag (`CustomizationCanvas3D.jsx`), but their size is fixed
+  (`size: {w, h}` in the layer configuration, currently 0.22 of the texture) with no handle to resize by hand as
+  in a typical design tool. Planned for **V2**: a corner-drag resize handle updating `size.w`/`size.h` in real
+  time, alongside the existing position drag.

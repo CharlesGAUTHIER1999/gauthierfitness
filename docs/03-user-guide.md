@@ -1,253 +1,258 @@
-# 03 - Manuel d'utilisation
+# 03 - User Guide
 
-> Guide destiné aux **utilisateurs finaux** (clients de la boutique) et aux **administrateurs** qui gèrent le catalogue
-> et les commandes. Couvre la compétence RNCP **C2.4.1**.
-
----
-
-## Partie A - Parcours client
-
-### A.1 - Découvrir le catalogue
-
-1. Ouvrir <https://gauthierfitness.fr>.
-2. La page d'accueil affiche les produits mis en avant.
-3. Le menu permet de filtrer par :
-    - **Genre** (homme, femme, mixte)
-    - **Catégorie** (t-shirts, leggings, accessoires, nutrition, etc.)
-    - **Tag** (nouveautés, meilleures ventes)
-4. Cliquer sur un produit ouvre la **page détail** avec :
-    - Galerie d'images (image principale + survol)
-    - Sélecteur de variante (couleur ou goût selon le produit)
-    - Sélecteur de taille / format / contenance
-    - Indicateur de stock
-    - Bouton **« Personnaliser »** si le produit est customisable
-    - Bouton **« Ajouter au panier »**
-
-### A.2 - Personnaliser un produit (3D)
-
-Disponible sur les vêtements et accessoires customisables.
-
-1. Cliquer sur **« Personnaliser »** sur la page produit.
-2. L'éditeur 3D s'ouvre avec une vue du produit.
-3. Outils disponibles :
-    - **Texte** - choisir police, couleur, taille, position
-    - **Logo** - uploader un fichier PNG/JPG/WebP (≤ 3 Mo)
-    - **Image** - uploader une image décorative (≤ 5 Mo)
-    - **IA** *(si activée sur le produit)* - décrire un design en langage naturel, l'IA génère une image
-4. Manipuler les éléments par drag-and-drop, redimensionner avec les poignées.
-5. Cliquer sur **« Aperçu »** pour voir le rendu final.
-6. Cliquer sur **« Ajouter au panier »** - la personnalisation est enregistrée et liée à la ligne du panier.
-
-#### Mode formulaire (accessibilité)
-
-Pour les utilisateurs ne pouvant pas utiliser la souris, un bouton **« Mode formulaire »** propose la même customisation
-via des champs texte et des sélecteurs.
-
-### A.3 - Génération de design par IA
-
-Sur les produits qui autorisent l'IA :
-
-1. Dans l'éditeur, cliquer sur l'icône **« IA »**.
-2. Saisir un prompt descriptif (10 caractères minimum, 5000 maximum).
-    - Exemple : *« Un dragon stylisé en noir et or, esthétique japonaise, sur fond transparent »*
-3. Cliquer sur **« Générer »** - la requête prend 6 à 10 secondes.
-4. L'image générée apparaît dans l'éditeur, manipulable comme une image uploadée.
-5. Si le résultat ne convient pas, relancer la génération avec un prompt affiné.
-
-> **Note** - Les designs générés sont sauvegardés dans le compte utilisateur et réutilisables.
-
-### A.4 - Gérer son panier
-
-1. Cliquer sur l'icône panier en haut à droite.
-2. Pour chaque ligne :
-    - Voir le sous-total, la variante, la personnalisation éventuelle
-    - Modifier la quantité avec les boutons `+` / `−`
-    - Supprimer la ligne avec l'icône poubelle
-3. Le sous-total et le délai de livraison s'affichent en bas.
-4. Cliquer sur **« Passer commande »** pour aller au checkout.
-
-### A.5 - Passer commande
-
-1. Connexion / inscription si pas déjà connecté.
-2. Saisir l'**adresse de livraison** (prénom, nom, adresse, code postal, ville, pays, téléphone optionnel).
-3. Cliquer sur **« Payer »** — le formulaire Stripe Elements apparaît.
-4. Saisir la carte bancaire (Stripe gère le **3D-Secure** automatiquement si la banque le demande).
-5. Confirmer le paiement.
-6. **Redirection vers la page de confirmation** avec récap de commande.
-7. Email de confirmation envoyé dans la foulée.
-
-### A.6 - Suivre ses commandes
-
-1. Menu **« Mon compte » → « Mes commandes »**.
-2. Liste des commandes par ordre antéchronologique.
-3. Pour chaque commande :
-    - Numéro, date, statut (`new`, `processing`, `shipped`, `delivered`, `canceled`)
-    - Total TTC
-    - Suivi de livraison (numéro de tracking + lien transporteur quand disponible)
-4. Cliquer sur une commande pour voir le détail (lignes, prix unitaire, personnalisations).
-5. À chaque changement de statut → email automatique.
-
-### A.7 - Contacter le support
-
-Formulaire de contact en footer : <https://gauthierfitness.fr/contact>
-
-- Nom, email, sujet (optionnel), message obligatoires.
-- Limité à 5 envois par minute par IP (anti-spam).
-- Le message arrive sur l'email support configuré (`hortense.gauthier2002@gmail.com`).
+> Guide for **end users** (store customers) and **administrators** who manage the catalog
+> and orders. Covers RNCP competency **C2.4.1**.
+>
+> Note: the product UI itself is in French (target audience: French customers). Button and menu labels below are
+> quoted exactly as they appear on screen, in French.
 
 ---
 
-## Partie B - Back-office administrateur
+## Part A - Customer Journey
 
-### B.1 - Accéder à l'admin
+### A.1 - Browsing the catalog
 
-1. Se connecter avec un compte ayant le rôle `admin`.
-2. Aller sur <https://gauthierfitness.fr/admin>.
-3. Le dashboard affiche les statistiques globales : produits actifs, commandes du jour/semaine/mois, CA, alertes stock.
+1. Open <https://gauthierfitness.fr>.
+2. The homepage shows featured products.
+3. The menu allows filtering by:
+    - **Gender** (men, women, unisex)
+    - **Category** (t-shirts, leggings, accessories, nutrition, etc.)
+    - **Tag** (new arrivals, bestsellers)
+4. Clicking a product opens the **detail page** with:
+    - Image gallery (main image + hover)
+    - Variant selector (color or flavor depending on the product)
+    - Size / format / volume selector
+    - Stock indicator
+    - **"Personnaliser"** (Customize) button if the product is customizable
+    - **"Ajouter au panier"** (Add to cart) button
 
-### B.2 - Gérer le catalogue
+### A.2 - Customizing a product (2D or 3D)
 
-#### Lister / rechercher les produits
+Available on customizable clothing and accessories. The editor is 2D (Konva canvas) or 3D (Three.js, real-time
+render on the garment mesh) depending on the product's configuration - the customer sees no toggle, each product
+simply opens in its configured mode.
 
-- Menu **« Produits »** → tableau paginé (20 / page) avec recherche par nom ou SKU.
-- Filtres : `actif`, `customisable`.
-- Colonnes : image, nom, SKU, prix TTC, statut, options.
+1. Click **"Personnaliser ce produit"** on the product page.
+2. The editor opens with a live, real-time view of the product (no separate preview step - every change is
+   reflected immediately).
+3. Three tabs give access to the tools:
+    - **Style** - garment color, decorative template, patterns/gradients
+    - **Texte** - player name, player number, free text
+    - **Médias** - chest logo, free image upload (≤ 5 MB), or an AI-generated design from a text prompt
+      *(if enabled on the product)*
+4. Text and image/logo elements can be **repositioned by drag** directly on the render. There is currently
+   **no resize handle** - uploaded/generated images have a fixed size (see
+   [01-architecture.md § 8](./01-architecture.md#8-known-limitations-and-evolution-areas)), planned for V2.
+5. Click **"Brouillon"** to save progress without adding to the cart, **"Réinitialiser"** to start over, or
+   **"Ajouter au panier"** (Add to cart) once satisfied - the customization is saved and linked to the cart line.
 
-#### Créer un produit
+Guard rails: a non-numeric player number, a blocklisted term in the player name/free text, or an uploaded/generated
+image flagged by content moderation (standard categories or a dedicated weapons/drugs/hate-symbols check) are all
+rejected with an explicit error message before they can be added to the cart.
 
-- Bouton **« Nouveau produit »** → formulaire avec :
-    - Identifiants : nom, SKU (unique), description
-    - Prix HT, prix TTC, TVA (généralement 20 %)
-    - Flags : actif, customisable, mode (`2d` / `3d`), autoriser texte / image / IA
-    - Options (taille / format / contenance) - ajoutables en une seule étape
-- À la création, le slug est généré automatiquement à partir du nom et dédupliqué si conflit.
+### A.3 - AI design generation
 
-#### Modifier / supprimer un produit
+On products that allow AI, from the **Médias** tab:
 
-- Cliquer sur une ligne → page d'édition.
-- Tous les champs sont modifiables, sauf le slug.
-- Suppression possible - les commandes existantes conservent leur snapshot et restent consultables.
-- Bouton **« Activer / Désactiver »** pour cacher temporairement du catalogue public.
+1. Enter a descriptive prompt in the **"Générer un design par IA"** field (10 characters minimum, 5000 maximum).
+    - Example: *"A stylized dragon in black and gold, Japanese aesthetic, on a transparent background"*
+2. Click **"Générer le design"** - the request typically takes 20 to 40 seconds (`gpt-image-1`, `quality: medium`).
+3. The generated image appears in the editor, positioned the same way as an uploaded image (drag to reposition).
+4. If the result isn't satisfactory, regenerate with a refined prompt.
 
-### B.3 - Gérer le stock
+> **Note** - Generated designs are saved to the user's account and reusable.
 
-#### Vue d'ensemble
+### A.4 - Managing the cart
 
-- Menu **« Stock »** → liste paginée de tous les produits avec leur quantité totale (somme des lots).
-- Recherche par nom / SKU.
-- Filtre visuel : produits en **rupture** (qty = 0) ou en **alerte** (qty < 5).
+1. Click the cart icon at the top right.
+2. For each line:
+    - View the subtotal, variant, and any customization
+    - Change the quantity with the `+` / `−` buttons
+    - Remove the line with the trash icon
+3. The subtotal and delivery time are shown at the bottom.
+4. Click **"Passer commande"** (Place order) to go to checkout.
 
-#### Détail d'un produit
+### A.5 - Placing an order
 
-- Cliquer sur un produit → vue détail :
-    - **Stock global** (lots sans variante) - par exemple pour la nutrition unitaire
-    - **Stock par option** (lots associés à une taille / goût)
-    - Pour chaque lot : numéro, quantité, quantité initiale, date d'expiration
-    - Lots triés FIFO (expiration la plus proche en premier)
+1. Log in / sign up if not already logged in.
+2. Enter the **shipping address** (first name, last name, address, zip code, city, country, optional phone).
+3. Click **"Payer"** (Pay) — the Stripe Elements form appears.
+4. Enter the card details (Stripe handles **3D-Secure** automatically if the bank requires it).
+5. Confirm the payment.
+6. **Redirect to the confirmation page** with an order summary.
+7. Confirmation email sent right after.
 
-#### Réapprovisionner
+### A.6 - Tracking orders
 
-- Bouton **« Nouveau lot »** → formulaire :
-    - Option (optionnelle, sinon stock global)
-    - Numéro de lot (obligatoire, unique)
-    - Quantité initiale
-    - Date d'expiration (optionnelle, doit être future)
-- À la création, un mouvement de stock `in` est tracé automatiquement.
+1. Menu **"Mon compte" → "Mes commandes"** (My account → My orders).
+2. List of orders in reverse chronological order.
+3. For each order:
+    - Number, date, status (`new`, `processing`, `shipped`, `delivered`, `canceled`)
+    - Total incl. tax
+    - Delivery tracking (tracking number + carrier link when available)
+4. Click an order to see the detail (lines, unit price, customizations).
+5. On every status change → automatic email.
 
-#### Corriger un lot
+### A.7 - Contacting support
 
-- Bouton **« Ajuster »** sur un lot → saisir la nouvelle quantité et un motif obligatoire.
-- Un mouvement de stock `correction` est tracé avec le delta.
-- Utilisé pour : casse, inventaire physique, erreur de saisie.
+Contact form in the footer: <https://gauthierfitness.fr/contact>
 
-#### Historique des mouvements
-
-- Bouton **« Historique »** sur un produit → tableau paginé (30 / page) avec :
-    - Date, type (`in` / `out` / `correction`), quantité, raison, lot concerné
-    - Sorties (`out`) automatiquement liées à la commande qui a consommé le stock.
-
-### B.4 - Gérer les commandes
-
-#### Lister / rechercher
-
-- Menu **« Commandes »** → tableau paginé (20 / page).
-- Filtres : statut, recherche par email/nom/prénom client.
-- Colonnes : numéro, client, total TTC, statut paiement, statut commande, date.
-
-#### Détail d'une commande
-
-- Cliquer sur une commande → vue détail :
-    - Client (firstname, lastname, email, téléphone)
-    - Lignes (produit, variante, personnalisation, quantité, prix unitaire, total)
-    - Paiement (provider, montant, statut, ID Stripe)
-    - Livraison (adresse complète, transporteur, tracking)
-
-#### Changer le statut
-
-- Bouton **« Marquer comme... »** :
-    - **Processing** - commande prise en charge (préparation)
-    - **Shipped** - expédiée → email automatique au client avec numéro de tracking
-    - **Delivered** - livrée → email automatique
-    - **Canceled** - annulée → email automatique
-
-Les emails ne sont envoyés **qu'une seule fois** par transition grâce aux marqueurs `shipped_email_sent_at`, etc.
-
-#### Saisir un numéro de tracking
-
-- Sur la page détail, encart **« Livraison »** → champ tracking + URL transporteur.
-- Visible côté client dans **« Mes commandes »**.
+- Name, email, subject (optional), message required.
+- Limited to 5 submissions per minute per IP (anti-spam).
+- The message is delivered to the configured support email (`hortense.gauthier2002@gmail.com`).
 
 ---
 
-## Partie C - Comptes utilisateurs
+## Part B - Admin Back-Office
 
-### Rôles
+### B.1 - Accessing the admin panel
 
-| Rôle                | Capacités                                                      |
-|---------------------|----------------------------------------------------------------|
-| Anonyme             | Naviguer le catalogue, contacter le support, ajout au panier   |
-| Client (`customer`) | + Ajouter au panier, commander, customiser, voir ses commandes |
-| Admin (`admin`)     | + Accéder au back-office, gérer catalogue / stock / commandes  |
+1. Log in with an account that has the `admin` role.
+2. Go to <https://gauthierfitness.fr/admin>.
+3. The dashboard shows overall stats: active products, orders for the day/week/month, revenue, stock alerts.
 
-Le rôle admin est attribué via la commande artisan :
+### B.2 - Managing the catalog
+
+#### Listing / searching products
+
+- **"Produits"** (Products) menu → paginated table (20 / page) with search by name or SKU.
+- Filters: `active`, `customizable`.
+- Columns: image, name, SKU, price incl. tax, status, options.
+
+#### Creating a product
+
+- **"Nouveau produit"** (New product) button → form with:
+    - Identifiers: name, SKU (unique), description
+    - Price excl. tax, price incl. tax, VAT (usually 20%)
+    - Flags: active, customizable, mode (`2d` / `3d`), allow text / image / AI
+    - Options (size / format / volume) - addable in a single step
+- On creation, the slug is generated automatically from the name and deduplicated on conflict.
+
+#### Editing / deleting a product
+
+- Click a row → edit page.
+- All fields are editable except the slug.
+- Deletion is possible - existing orders keep their snapshot and remain viewable.
+- **"Activer / Désactiver"** (Activate / Deactivate) button to temporarily hide from the public catalog.
+
+### B.3 - Managing stock
+
+#### Overview
+
+- **"Stock"** menu → paginated list of all products with their total quantity (sum of lots).
+- Search by name / SKU.
+- Visual filter: products **out of stock** (qty = 0) or **low stock** (qty < 5).
+
+#### Product detail
+
+- Click a product → detail view:
+    - **Global stock** (lots without a variant) - e.g. for unit nutrition items
+    - **Stock by option** (lots tied to a size / flavor)
+    - For each lot: number, quantity, initial quantity, expiration date
+    - Lots sorted FIFO (nearest expiration first)
+
+#### Restocking
+
+- **"Nouveau lot"** (New lot) button → form:
+    - Option (optional, otherwise global stock)
+    - Lot number (required, unique)
+    - Initial quantity
+    - Expiration date (optional, must be in the future)
+- On creation, an `in` stock movement is automatically tracked.
+
+#### Correcting a lot
+
+- **"Ajuster"** (Adjust) button on a lot → enter the new quantity and a required reason.
+- A `correction` stock movement is tracked with the delta.
+- Used for: breakage, physical inventory, data entry error.
+
+#### Movement history
+
+- **"Historique"** (History) button on a product → paginated table (30 / page) with:
+    - Date, type (`in` / `out` / `correction`), quantity, reason, related lot
+    - Outgoing movements (`out`) automatically linked to the order that consumed the stock.
+
+### B.4 - Managing orders
+
+#### Listing / searching
+
+- **"Commandes"** (Orders) menu → paginated table (20 / page).
+- Filters: status, search by customer email/name/first name.
+- Columns: number, customer, total incl. tax, payment status, order status, date.
+
+#### Order detail
+
+- Click an order → detail view:
+    - Customer (firstname, lastname, email, phone)
+    - Lines (product, variant, customization, quantity, unit price, total)
+    - Payment (provider, amount, status, Stripe ID)
+    - Shipping (full address, carrier, tracking)
+
+#### Changing the status
+
+- **"Marquer comme..."** (Mark as...) button:
+    - **Processing** - order taken in charge (preparation)
+    - **Shipped** - shipped → automatic email to the customer with tracking number
+    - **Delivered** - delivered → automatic email
+    - **Canceled** - canceled → automatic email
+
+Emails are only sent **once** per transition, thanks to markers like `shipped_email_sent_at`, etc.
+
+#### Entering a tracking number
+
+- On the detail page, the **"Livraison"** (Shipping) panel → tracking field + carrier URL.
+- Visible to the customer under **"Mes commandes"** (My orders).
+
+---
+
+## Part C - User Accounts
+
+### Roles
+
+| Role                  | Capabilities                                              |
+|-----------------------|-----------------------------------------------------------|
+| Anonymous             | Browse the catalog, contact support, add to cart          |
+| Customer (`customer`) | + Add to cart, order, customize, view their orders        |
+| Admin (`admin`)       | + Access the back-office, manage catalog / stock / orders |
+
+The admin role is assigned via the artisan command:
 
 ```bash
 php artisan tinker
 >>> User::find(1)->roles()->attach(Role::where('name', 'admin')->first());
 ```
 
-### Réinitialisation de mot de passe
+### Password reset
 
-Pas encore exposée côté UI - à passer par l'admin pour générer un nouveau mot de passe :
+Not yet exposed in the UI - go through the admin to generate a new password:
 
 ```bash
 php artisan tinker
->>> User::find($id)->update(['password' => Hash::make('nouveau-mdp')]);
+>>> User::find($id)->update(['password' => Hash::make('new-password')]);
 ```
 
-Évolution prévue : flow self-service classique avec lien magique par email.
+Planned evolution: standard self-service flow with a magic link via email.
 
 ---
 
-## Partie D - Dépannage
+## Part D - Troubleshooting
 
-### « Mon panier disparaît à chaque déconnexion »
+### "My cart disappears every time I log out"
 
-C'est volontaire : le panier est lié à l'utilisateur en base. À la connexion suivante, il est récupéré tel quel. Si
-vide, vérifier que la commande n'a pas été validée entre temps (un paiement réussi vide le panier).
+This is intentional: the cart is tied to the user in the database. On the next login, it's retrieved as-is. If
+empty, check whether the order was completed in the meantime (a successful payment empties the cart).
 
-### « Le paiement échoue »
+### "Payment fails"
 
-- Vérifier que la carte n'est pas en mode test (4242 ne fonctionne qu'en environnement de dev).
-- Le 3D-Secure peut être déclenché par la banque — finir la procédure dans le pop-up.
-- Si l'erreur persiste, vérifier dans Stripe Dashboard (`payment_intent.payment_failed` log).
+- Check that the card isn't in test mode (4242 only works in a dev environment).
+- 3D-Secure may be triggered by the bank - complete the process in the pop-up.
+- If the error persists, check the Stripe Dashboard (`payment_intent.payment_failed` log).
 
-### « Un produit affiche stock = 0 mais je viens d'en ajouter »
+### "A product shows stock = 0 but I just added some"
 
-Vider le cache navigateur ou rafraîchir. Le stock est recalculé à la volée par requête SQL (somme des `quantity` des
-lots).
+Clear the browser cache or refresh. Stock is recalculated on the fly via SQL query (sum of lot `quantity`).
 
-### « L'éditeur 3D ne s'ouvre pas »
+### "The 3D editor won't open"
 
-- Vérifier que le navigateur supporte WebGL (testable sur <https://get.webgl.org>).
-- Désactiver les bloqueurs de scripts (uBlock peut bloquer `react-konva`).
+- Check that the browser supports WebGL (testable at <https://get.webgl.org>).
+- Disable script blockers (uBlock can block `react-konva`).
