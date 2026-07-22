@@ -1,74 +1,95 @@
 # Changelog
 
-Toutes les évolutions notables du meta-repo GauthierFitness (documentation transverse, preuves de recette, rendus
-RNCP) sont documentées ici.
+All notable changes to the GauthierFitness meta-repo (cross-project documentation, recette proofs, RNCP
+submissions) are documented here.
 
-Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
+Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [v1.0.6] - 2026-07-15
 
 ### Removed
-- `.gitignore` : suppression d'une règle d'exclusion obsolète référençant un dossier d'outillage local, sans intérêt pour le zip de rendu.
+
+- `.gitignore`: removed an obsolete exclusion rule referencing a local tooling folder, irrelevant to the submission zip.
 
 ## [v1.0.5] - 2026-07-13
 
 ### Fixed
-- `README.md` et `docs/02-deployment.md` : le quickstart Docker (chemin recommandé) ne mentionnait jamais `php artisan key:generate`, contrairement au chemin sans Docker déjà correct. `APP_KEY` restait vide dans `.env.docker`, cassant tout ce qui dépend de l'encryption sur une installation fraîche. Repéré en testant le zip de rendu de bout en bout (extraction vierge + build local). Voir aussi le correctif jumeau sur `gauthierfitness-backend` (v1.0.6).
+
+- `README.md` and `docs/02-deployment.md`: the Docker quickstart (recommended path) never mentioned
+  `php artisan key:generate`, unlike the Docker-free path which was already correct. `APP_KEY` stayed empty in
+  `.env.docker`, breaking everything relying on encryption on a fresh install. Found while testing the submission zip
+  end to end (fresh extraction + local build). See also the twin fix on `gauthierfitness-backend` (v1.0.6).
 
 ## [v1.0.4] - 2026-07-13
 
 ### Changed
-- `rendusrncp/cahier_recettes.xlsx` : harmonisation des compteurs de tests (166 PHPUnit / 40 Jest) avec le code et le dossier Bloc 2.
-- `preuves_recettes/ui06-protectedroute-test.png` mise à jour.
+
+- `rendusrncp/cahier_recettes.xlsx`: harmonized test counters (166 PHPUnit / 40 Jest) with the code and the Bloc 2
+  dossier.
+- `preuves_recettes/ui06-protectedroute-test.png` updated.
 
 ### Fixed
-- `preuves_recettes/a11y-01.mp4` : taille corrigée après un premier remplacement surdimensionné (92 Mo → 12 Mo).
+
+- `preuves_recettes/a11y-01.mp4`: file size fixed after an initial oversized replacement (92 MB → 12 MB).
 
 ## [v1.0.3] - 2026-07-12
 
 ### Added
-- `rendusrncp/BLOC2_DOSSIER.docx` finalisé pour le rendu RNCP (relecture complète, page de garde, sommaire réduit aux titres principaux, images redimensionnées).
+
+- `rendusrncp/BLOC2_DOSSIER.docx` finalized for the RNCP submission (full proofread, cover page, table of contents
+  trimmed to main headings, resized images).
 
 ### Changed
-- Renommage en minuscules de `preuves_recettes/` et synchronisation des chemins (`docs/05-api.md`, `FICHES_INCIDENTS.md`) après la réorganisation des contrôleurs backend.
+
+- Renamed `preuves_recettes/` to lowercase and synced the paths (`docs/05-api.md`, `FICHES_INCIDENTS.md`) after the
+  backend controller reorganization.
 
 ### Removed
-- Doublons `BLOC2RNCP.docx`, `BLOC4RNCP.docx`, `BLOC4_DOSSIER.docx` (versions obsolètes).
+
+- Duplicates `BLOC2RNCP.docx`, `BLOC4RNCP.docx`, `BLOC4_DOSSIER.docx` (obsolete versions).
 
 ## [v1.0.2] - 2026-07-10
 
 ### Fixed
-- Quickstart (README + docs/02-deployment.md) : Docker devient le chemin recommandé pour le démarrage local, l'option sans Docker nécessitait un MySQL local non documenté.
+
+- Quickstart (README + docs/02-deployment.md): Docker becomes the recommended path for local startup, the Docker-free
+  option required an undocumented local MySQL.
 
 ## [v1.0.1] - 2026-07-10
 
 ### Added
-- Fiche d'incident 9 (timeout génération IA) avec validation en conditions réelles.
-- Audit Lighthouse des pages de production, dont la fiche du bug CSP/configurateur 3D.
-- Scénario CONT-03 (preuve du canal support) et clôture complète du cahier de recettes.
+
+- Incident report 9 (AI generation timeout) with real-conditions validation.
+- Lighthouse audit of production pages, including the CSP/3D configurator bug report.
+- Scenario CONT-03 (support channel proof) and full closure of the recette test book.
 
 ### Fixed
-- Instructions de configuration de l'environnement Docker corrigées dans la documentation.
+
+- Corrected Docker environment setup instructions in the documentation.
 
 ### Changed
-- Compression de A11Y-01.mp4 (90 Mo -> 3 Mo, qualité équivalente).
-- Synchronisation des dossiers Bloc 2 / Bloc 4 avec le cahier de recettes et le décompte d'incidents.
+
+- Compressed A11Y-01.mp4 (90 MB → 3 MB, same quality).
+- Synced the Bloc 2 / Bloc 4 dossiers with the recette test book and the incident count.
 
 ## [v1.0.0] - 2026-07-08
 
-Première release taguée du meta-repo, alignée avec la V1 de l'application (backend, frontend, infra).
+First tagged release of the meta-repo, aligned with the application's V1 (backend, frontend, infra).
 
 ### Added
-- Documentation transverse du projet (`docs/`) : architecture, déploiement, guide utilisateur, mise à jour, API.
-- Rapports Lighthouse avant/après correctifs, preuves de recette, cahier de recettes.
-- Rendus RNCP Bloc 2 et Bloc 4 (v2) : `rendusrncp/BLOC2_DOSSIER.docx`, `rendusrncp/BLOC4_DOSSIER.docx`.
+
+- Cross-project documentation (`docs/`): architecture, deployment, user guide, upgrade, API.
+- Before/after Lighthouse reports, recette proofs, recette test book.
+- RNCP Bloc 2 and Bloc 4 submissions (v2): `rendusrncp/BLOC2_DOSSIER.docx`, `rendusrncp/BLOC4_DOSSIER.docx`.
 
 ### Changed
-- README : instructions de clonage en HTTPS, étape `storage:link` ajoutée au démarrage rapide.
-- Nettoyage de mise en forme (tableaux, titres) dans `docs/README.md`, `docs/02-deployment.md`.
+
+- README: HTTPS clone instructions, `storage:link` step added to the quickstart.
+- Formatting cleanup (tables, headings) in `docs/README.md`, `docs/02-deployment.md`.
 
 ### Fixed
-- Correction d'une coquille dans `docs/03-user-guide.md` (parcours checkout).
 
-> Les rendus RNCP (`rendusrncp/`) sont en v2 à ce stade. Une v3, définitive (relecture complète, captures d'écran),
-> sera déposée séparément avant l'échéance, avec retrait du Bloc 4 (à rendre en août dans un dossier dédié).
+- Fixed a typo in `docs/03-user-guide.md` (checkout flow).
+
+> The RNCP submissions (`rendusrncp/`) are at v2 at this stage. A final v3 (full proofread, screenshots) will be
+> submitted separately before the deadline, with Bloc 4 removed (to be submitted separately in August).

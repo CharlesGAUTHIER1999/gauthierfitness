@@ -1,47 +1,47 @@
-# 04 - Manuel de mise à jour
+# 04 - Upgrade Manual
 
-> Procédure pour publier une nouvelle version de GauthierFitness en production, gérer les migrations DB, mettre à jour
-> les dépendances et exécuter un rollback si nécessaire. Couvre les compétences RNCP **C2.4.1** (documentation) et *
-*C4.1.1** (gestion des mises à jour de dépendances).
+> Procedure for publishing a new version of GauthierFitness to production, managing DB migrations, updating
+> dependencies, and running a rollback if needed. Covers RNCP competencies **C2.4.1** (documentation) and
+> **C4.1.1** (dependency upgrade management).
 
 ---
 
-## 1. Cycle de release
+## 1. Release Cycle
 
 ```
 feature → develop          (staging auto)
-develop → main             (production manuel)
-main    → tag vX.Y.Z       (versioning sémantique)
+develop → main             (production manual)
+main    → tag vX.Y.Z       (semantic versioning)
 ```
 
-### Convention de version (SemVer)
+### Version convention (SemVer)
 
-- **MAJOR** (`vX.0.0`) - changement cassant d'API publique ou de schéma DB sans migration backward-compatible.
-- **MINOR** (`v1.X.0`) - nouvelle fonctionnalité, sans casser l'existant.
-- **PATCH** (`v1.0.X`) - bugfix, perf, sécurité.
+- **MAJOR** (`vX.0.0`) - breaking change to the public API or DB schema without a backward-compatible migration.
+- **MINOR** (`v1.X.0`) - new feature, without breaking existing behavior.
+- **PATCH** (`v1.0.X`) - bugfix, perf, security.
 
-La version est portée par :
+The version is carried by:
 
-- Le tag Git (`git tag v1.2.0`)
-- Le tag Docker image (`ghcr.io/.../gauthierfitness-backend:v1.2.0`)
-- La variable `API_VERSION` dans `.env` (lue par Scramble pour l'OpenAPI)
+- The Git tag (`git tag v1.2.0`)
+- The Docker image tag (`ghcr.io/.../gauthierfitness-backend:v1.2.0`)
+- The `API_VERSION` variable in `.env` (read by Scramble for the OpenAPI spec)
 
 ---
 
-## 2. Préparer une release
+## 2. Preparing a Release
 
-### Étape 1 - Geler develop
+### Step 1 - Freeze develop
 
-1. Vérifier que `develop` est stable sur staging (manuels, tests, retours QA).
-2. Annoncer le freeze dans le canal d'équipe (pas de nouveau merge sur `develop`).
+1. Check that `develop` is stable on staging (manual checks, tests, QA feedback).
+2. Announce the freeze in the team channel (no new merges to `develop`).
 
-### Étape 2 - Mettre à jour les versions
+### Step 2 - Bump versions
 
 ```bash
 # Backend
 cd backend
-# Bumper API_VERSION dans .env.example (servira de défaut)
-# Bumper la version dans composer.json si pertinent
+# Bump API_VERSION in .env.example (will serve as the default)
+# Bump the version in composer.json if relevant
 
 # Frontend
 cd ../frontend
@@ -50,40 +50,40 @@ git add package.json package-lock.json
 git commit -m "chore: bump version 1.2.0"
 ```
 
-### Étape 3 - Rédiger le CHANGELOG
+### Step 3 - Write the CHANGELOG
 
-Ajouter une section en haut de `CHANGELOG.md` (à créer s'il n'existe pas) :
+Add a section at the top of `CHANGELOG.md` (create it if it doesn't exist):
 
 ```markdown
 ## v1.2.0 - 2026-06-17
 
 ### Added
 
-- Génération de design IA via OpenAI (GF18)
-- Mode formulaire accessible dans l'éditeur 2D (GF19)
+- AI design generation via OpenAI (GF18)
+- Accessible form mode in the 2D editor (GF19)
 
 ### Changed
 
-- Migration Laravel 12 → 13
-- Mise à jour des dépendances composer / npm
+- Laravel 12 → 13 migration
+- Composer / npm dependency updates
 
 ### Fixed
 
-- Bug d'arrondi sur les totaux TTC avec options multiples (GF20)
+- Rounding bug on totals incl. tax with multiple options (GF20)
 
 ### Security
 
-- Mots de passe MySQL sortis du docker-compose.yml (GF23)
+- MySQL passwords removed from docker-compose.yml (GF23)
 ```
 
-### Étape 4 - PR develop → main
+### Step 4 - PR develop → main
 
-1. Ouvrir une PR `develop → main` avec le CHANGELOG comme description.
-2. Review obligatoire (même en solo : 24 h de relecture à froid).
-3. Vérifier que la CI est verte.
-4. Merger en **« Merge commit »** (pas squash, pour préserver l'historique).
+1. Open a `develop → main` PR with the CHANGELOG as the description.
+2. Review is mandatory (even solo: 24h of cold re-read).
+3. Check that CI is green.
+4. Merge as a **"Merge commit"** (not squash, to preserve history).
 
-### Étape 5 - Tagger
+### Step 5 - Tag
 
 ```bash
 git checkout main
@@ -94,140 +94,140 @@ git push origin v1.2.0
 
 ---
 
-## 3. Déployer en production
+## 3. Deploying to Production
 
-Voir aussi [02-deployment.md § Déploiement production](./02-deployment.md#déploiement-production--manuel-avec-gate).
+See also [02-deployment.md § Production Deployment](./02-deployment.md#production-deployment--manual-with-gate).
 
-### Procédure standard
+### Standard procedure
 
-1. Sur GitHub Actions, déclencher manuellement `deploy-prod` avec le tag (`v1.2.0`) ou le sha de main.
-2. Le runner se connecte au VPS prod et exécute `infra/scripts/deploy-prod.sh`.
-3. Le script :
-    - Pull le code (`git pull origin main`)
-    - Pull les nouvelles images Docker
-    - Active le mode maintenance (`artisan down`)
-    - Exécute les migrations (`artisan migrate --force`)
-    - Redémarre les conteneurs
-    - Re-cache config / routes / views / events
-    - Désactive le mode maintenance (`artisan up`)
+1. On GitHub Actions, manually trigger `deploy-prod` with the tag (`v1.2.0`) or the sha of main.
+2. The runner connects to the prod VPS and runs `infra/scripts/deploy-prod.sh`.
+3. The script:
+    - Pulls the code (`git pull origin main`)
+    - Pulls the new Docker images
+    - Enables maintenance mode (`artisan down`)
+    - Runs the migrations (`artisan migrate --force`)
+    - Restarts the containers
+    - Re-caches config / routes / views / events
+    - Disables maintenance mode (`artisan up`)
     - Health check (`curl /api/health`)
 
-### Surveillance post-déploiement
+### Post-deployment monitoring
 
-Pendant les 30 minutes qui suivent :
+During the 30 minutes that follow:
 
-- Vérifier les logs Laravel : `docker compose logs -f gf_backend | grep -i error`
-- Vérifier les webhooks Stripe Dashboard (pas de failure massive).
-- Tester un parcours d'achat de bout en bout (compte test → commande test).
-- Surveiller le taux de réponse 5xx via les logs Nginx.
+- Check the Laravel logs: `docker compose logs -f gf_backend | grep -i error`
+- Check the Stripe webhooks dashboard (no mass failures).
+- Test a full purchase journey end to end (test account → test order).
+- Watch the 5xx response rate via the Nginx logs.
 
 ---
 
-## 4. Migrations de base de données
+## 4. Database Migrations
 
-### Règles d'or
+### Golden rules
 
-- **Toujours backward-compatible sur N versions** - un déploiement progressif doit pouvoir coexister avec l'ancienne
-  version du code pendant la migration.
-- **Pas de DROP COLUMN dans la même release que la dépréciation** - déprécier en V1, supprimer en V2.
-- **Index sur les FK toujours créés avec la migration** - performance & cohérence.
-- **Tester sur une copie de la prod** avant chaque migration risquée.
+- **Always backward-compatible across N versions** - a progressive deployment must be able to coexist with the
+  previous version of the code during the migration.
+- **No DROP COLUMN in the same release as the deprecation** - deprecate in V1, remove in V2.
+- **Indexes on FKs always created with the migration** - for performance & consistency.
+- **Test on a copy of production** before any risky migration.
 
-### Procédure pour une migration risquée
+### Procedure for a risky migration
 
 ```bash
-# 1. Backup avant tout
+# 1. Backup first
 mysqldump -u root -p gauthier_fitness > backup-pre-v1.2.0.sql
 gpg --encrypt --recipient charles@... backup-pre-v1.2.0.sql
 
-# 2. Mode maintenance prolongé si migration lourde
+# 2. Extended maintenance mode
 php artisan down --retry=300
 
-# 3. Migration sèche (dry-run sur dump)
+# 3. Dry-run migration
 mysql -u root -p < migration-test.sql
 
-# 4. Migration réelle
+# 4. Actual migration
 php artisan migrate --force
 
-# 5. Vérifier que les requêtes critiques tournent
+# 5. Verify that critical queries still work
 php artisan tinker
 >>> Order::count();
 >>> Product::active()->count();
 
-# 6. Sortir de maintenance
+# 6. Exit maintenance mode
 php artisan up
 ```
 
-### Migrations longues - éviter le mode maintenance
+### Long migrations - avoiding maintenance mode
 
-Pour les migrations qui prennent plus de quelques secondes :
+For migrations that take more than a few seconds:
 
-- Utiliser `pt-online-schema-change` (Percona Toolkit) pour les ALTER TABLE sur grosses tables.
-- Découper la migration en plusieurs `batch` (ex : backfill par lot de 10 000 lignes via `chunk()`).
-- Faire la migration **avant** le déploiement du code qui l'exige (deploy en 2 étapes).
+- Use `pt-online-schema-change` (Percona Toolkit) for ALTER TABLE on large tables.
+- Split the migration into several `batch`es (e.g.: backfill in batches of 10,000 rows via `chunk()`).
+- Run the migration **before** deploying the code that requires it (two-step deploy).
 
 ---
 
-## 5. Mise à jour des dépendances
+## 5. Dependency Updates
 
 ### Backend (Composer)
 
-#### Audit régulier
+#### Regular audit
 
 ```bash
-composer audit                  # vulnérabilités connues
-composer outdated --direct      # ce qui peut être bumpé
+composer audit                  # known vulnerabilities
+composer outdated --direct      # what can be bumped
 ```
 
-À faire **hebdomadairement** sur `develop` puis valider en local + CI.
+To be done **weekly** on `develop`, then validated locally + in CI.
 
-#### Bump mineur / patch
+#### Minor / patch bump
 
 ```bash
 composer update --with-dependencies
-php artisan test                # vérifier que rien ne casse
-./vendor/bin/pint               # corriger le style
+php artisan test                # verify nothing broke
+./vendor/bin/pint               # fix style
 git commit -am "chore(deps): bump composer dependencies"
 ```
 
-#### Bump majeur (ex: Laravel 12 → 13)
+#### Major bump (e.g.: Laravel 12 → 13)
 
-- **Lire le upgrade guide officiel** de Laravel.
-- Faire la migration sur une branche dédiée (`GF-laravel-13`).
-- Lancer le test suite complet + Pail en local pour observer les warnings.
-- Tester staging pendant **au moins 48 h** avant de viser la prod.
-- Surveiller les breaking changes des packages tiers (Sanctum, Scramble, etc.).
+- **Read the official Laravel upgrade guide**.
+- Do the migration on a dedicated branch (`GF-laravel-13`).
+- Run the full test suite + Pail locally to observe warnings.
+- Test on staging for **at least 48h** before targeting prod.
+- Watch for breaking changes in third-party packages (Sanctum, Scramble, etc.).
 
 ### Frontend (npm)
 
-#### Audit régulier
+#### Regular audit
 
 ```bash
-npm audit                       # vulnérabilités
-npm outdated                    # ce qui peut être bumpé
+npm audit                       # vulnerabilities
+npm outdated                    # what can be bumped
 ```
 
 #### Bump
 
 ```bash
-npm update                      # respecte les ranges semver de package.json
+npm update                      # respects package.json semver ranges
 npm run lint                    # ESLint
-npm run build                   # vérifier que le build passe
+npm run build                   # verify the build passes
 ```
 
-Pour les bumps majeurs (React 18 → 19, etc.), faire sur une branche dédiée + test manuel approfondi.
+For major bumps (React 18 → 19, etc.), do it on a dedicated branch + thorough manual testing.
 
-### Système & images Docker
+### System & Docker images
 
-- Image `php:8.3-fpm-alpine` → suivre les **releases PHP** (patch mensuel généralement).
-- Image `nginx:alpine` → rebuild au moins une fois par trimestre.
-- Image `mysql:8.0` → upgrade mineur à chaque LTS.
+- `php:8.3-fpm-alpine` image → follow **PHP releases** (usually a monthly patch).
+- `nginx:alpine` image → rebuild at least once a quarter.
+- `mysql:8.0` image → minor upgrade on every LTS.
 
-Le rebuild se déclenche automatiquement à chaque push sur `main` (cf. CI/CD).
+The rebuild is triggered automatically on every push to `main` (cf. CI/CD).
 
 ### Dependabot
 
-Activer Dependabot sur les deux repos GitHub pour recevoir des PR automatiques :
+Enable Dependabot on both GitHub repos to receive automatic PRs:
 
 ```yaml
 # .github/dependabot.yml
@@ -251,70 +251,70 @@ updates:
 
 ## 6. Rollback
 
-### Rollback applicatif (sans toucher à la DB)
+### Application rollback (without touching the DB)
 
-Si une nouvelle version casse la prod **sans avoir migré la DB** :
+If a new version breaks prod **without having migrated the DB**:
 
 ```bash
-# Sur le VPS prod
+# On the prod VPS
 cd /var/www/gauthierfitness
-export IMAGE_TAG=<sha-stable-précédent>
+export IMAGE_TAG=<previous-stable-sha>
 docker compose pull
 docker compose up -d
 sleep 8
 curl https://gauthierfitness.fr/api/health
 ```
 
-Le sha précédent est dans l'historique GHCR ou dans `git log --oneline -10 main`.
+The previous sha is in the GHCR history or in `git log --oneline -10 main`.
 
-### Rollback avec migration DB
+### Rollback with a DB migration
 
-Si une migration a tourné et qu'elle est en cause :
+If a migration has run and is the cause:
 
 ```bash
-# 1. Mode maintenance
+# 1. Maintenance mode
 docker compose exec -T backend php artisan down --retry=60
 
-# 2. Rollback migration
+# 2. Rollback the migration
 docker compose exec -T backend php artisan migrate:rollback --step=1
 
-# 3. Rollback image
-export IMAGE_TAG=<sha-précédent>
+# 3. Rollback the image
+export IMAGE_TAG=<previous-sha>
 docker compose up -d
 sleep 8
 
-# 4. Sortir de maintenance
+# 4. Exit maintenance mode
 docker compose exec -T backend php artisan up
 
-# 5. Vérification
+# 5. Verification
 curl https://gauthierfitness.fr/api/health
 ```
 
-**⚠️ Si la migration a fait un `DROP COLUMN` ou un changement destructif**, le rollback de migration ne récupèrera **pas
-** les données. C'est pour ça qu'on évite les migrations destructives en une release (cf. règles d'or § 4).
+**⚠️ If the migration ran a `DROP COLUMN` or another destructive change**, rolling back the migration will
+**not** recover the data. This is why destructive migrations are avoided within a single release (cf. golden
+rules § 4).
 
-### Rollback DB complet (restauration backup)
+### Full DB rollback (backup restore)
 
-Cas d'urgence si la DB est corrompue :
+Emergency case if the DB is corrupted:
 
 ```bash
-# Sur le VPS
+# On the VPS
 docker compose exec -T backend php artisan down --retry=600
 gpg --decrypt backup-pre-v1.2.0.sql.gpg | mysql -u root -p gauthier_fitness
-export IMAGE_TAG=<sha-précédent>
+export IMAGE_TAG=<previous-sha>
 docker compose up -d
 docker compose exec -T backend php artisan up
 ```
 
-Prévoir une **fenêtre de maintenance annoncée** car la restauration peut prendre 10-30 minutes sur une DB de plusieurs
-Go.
+Plan for an **announced maintenance window**, as restoring can take 10-30 minutes on a multi-GB database.
 
 ---
 
-## 7. Journal des versions
+## 7. Version Log
 
-Maintenir `CHANGELOG.md` à la racine du repo, mis à jour à **chaque release**,
-format [Keep a Changelog](https://keepachangelog.com/) :
+Maintain `CHANGELOG.md` at the root of the repo, updated on **every release**,
+following the [Keep a Changelog](https://keepachangelog.com/) format:
 
 ```markdown
 # Changelog
@@ -348,24 +348,24 @@ All notable changes to this project will be documented in this file.
 - ...
 ```
 
-Le CHANGELOG est aussi recopié dans la **release GitHub** correspondante (page Releases) pour servir de référence aux
-intégrateurs externes.
+The CHANGELOG is also copied into the corresponding **GitHub release** (Releases page) to serve as a reference
+for external integrators.
 
 ---
 
-## 8. Checklist de release
+## 8. Release Checklist
 
-À cocher avant chaque déploiement prod :
+To check before every prod deployment:
 
-- [ ] Tous les tests passent sur `develop`
-- [ ] Staging stable depuis ≥ 24 h
-- [ ] CHANGELOG mis à jour
-- [ ] Version bumpée (composer, package.json, .env.example)
-- [ ] PR `develop → main` reviewée et mergée
-- [ ] Tag Git posé et pushé
-- [ ] Backup DB pré-deploy fait
-- [ ] Annonce d'éventuelle interruption envoyée si migration lourde
-- [ ] Déploiement déclenché et health check vert
-- [ ] Smoke test post-deploy (compte test + commande test)
-- [ ] Surveillance des logs pendant 30 min
-- [ ] Release GitHub publiée avec le CHANGELOG
+- [ ] All tests pass on `develop`
+- [ ] Staging stable for ≥ 24h
+- [ ] CHANGELOG updated
+- [ ] Version bumped (composer, package.json, .env.example)
+- [ ] `develop → main` PR reviewed and merged
+- [ ] Git tag created and pushed
+- [ ] Pre-deploy DB backup done
+- [ ] Downtime notice sent if a heavy migration is involved
+- [ ] Deployment triggered and health check green
+- [ ] Post-deploy smoke test (test account + test order)
+- [ ] Logs monitored for 30 min
+- [ ] GitHub release published with the CHANGELOG
