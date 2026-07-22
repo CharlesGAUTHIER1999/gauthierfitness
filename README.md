@@ -18,7 +18,7 @@ release, run CI/CD, and manage permissions independently:
 | **Backend**  | [gauthierfitness-backend](https://github.com/CharlesGAUTHIER1999/gauthierfitness-backend)   | Laravel 13 · PHP 8.3 · MySQL 8 · Sanctum · Stripe · OpenAI    | REST API, payment, customization, stock, AI generation                 |
 | **Frontend** | [gauthierfitness-frontend](https://github.com/CharlesGAUTHIER1999/gauthierfitness-frontend) | React 19 · Vite 7 · Konva 2D · Three.js · Zustand · Stripe.js | Storefront, 3D configurator, admin back-office                         |
 | **Infra**    | [gauthierfitness-infra](https://github.com/CharlesGAUTHIER1999/gauthierfitness-infra)       | Docker · Nginx · OVH (2 VPS) · GitHub Actions · Let's Encrypt | Reverse proxy, staging & production deployment                         |
-| **Docs**     | [gauthierfitness]                                                                           | Markdown                                                      | Cross-project documentation, entry point for the jury / new developers |
+| **Docs**     | [gauthierfitness](https://github.com/CharlesGAUTHIER1999/gauthierfitness)                    | Markdown                                                      | Cross-project documentation, entry point for the jury / new developers |
 
 ---
 
