@@ -21,5 +21,8 @@ Thumbs.db
 ~$*.docx
 ~$*.xlsx
 
+# Dossiers Word (bloc 2/4) - ajoutés à la main au zip final, jamais commités
+rendusrncp/*.docx
+
 # Logs et caches éventuels
 *.log
