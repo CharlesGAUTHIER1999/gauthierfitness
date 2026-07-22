@@ -26,15 +26,15 @@ Screenshots and videos supporting the recette test book (see `rendusrncp/cahier_
 | `erreursentryfront-1.png`                 | Frontend Sentry issue (test) in the dashboard                                                                                        |
 | `erreursentryfront-2.png`                 | Test error captured in the browser console                                                                                           |
 | `sentrybackend-1.png`, `-2.png`, `-4.png` | Real incident: `/api/ai/designs/generate` timeout (30s exceeded) — **no dedicated report in `FICHES_INCIDENTS.md` yet, to be added** |
-| `sentrybackend-3.png`                     | Separate real incident: `Class "Redis" not found` — Report 5 in `rendusrncp/FICHES_INCIDENTS.md`                                     |
+| `sentrybackend-3.png`                     | Separate real incident: `Class "Redis" not found` - Report 5 in `rendusrncp/FICHES_INCIDENTS.md`                                     |
 
 ## Tests, pipeline, accessibility, payment
 
 | File                               | Content                                                                    |
 |------------------------------------|----------------------------------------------------------------------------|
-| `backendtests-1.png` / `-2.png`    | Backend test suite (PHPUnit, 199 passed)                                   |
+| `backendtests-1.png` / `-2.png`    | Backend test suite (PHPUnit, 200 passed)                                   |
 | `frontendtests.png`                | Frontend test suite (Jest, 40 passed)                                      |
-| `tests-coverage.png`               | Backend code coverage by file (`php artisan test --coverage`, total 84.0%) |
+| `tests-coverage.png`               | Backend code coverage by file (`php artisan test --coverage`, total 84.1%) |
 | `pipeline-1.png` … `-3.png`        | CI/CD pipeline (GitHub Actions)                                            |
 | `A11Y-01.png` / `A11Y-01.mp4`      | Accessibility demonstration (keyboard navigation/screen reader)            |
 | `uptime-1.png`                     | Uptime monitoring                                                          |
@@ -53,11 +53,11 @@ Screenshots and videos supporting the recette test book (see `rendusrncp/cahier_
 | `infra04-pipeline-staging-e2e.png`           | INFRA-04: staging pipeline + Cypress E2E green (GitHub Actions)                                |
 | `infra05-pipeline-production.png`            | INFRA-05: production deployment with manual approval gate validated (GitHub Actions)           |
 
-## Closing out the recette test book, second pass (96 → 99 scenarios, 21/07/2026)
+## Closing out the recette test book, second pass (96 → 100 scenarios, 21/07/2026)
 
-Three new Customization scenarios, found and closed during a manual browser walkthrough of the guard rails
-(player number format, text blocklist, upload moderation) that had automated test coverage but no recette
-entry yet.
+Four new Customization scenarios, found and closed during a manual browser walkthrough of the guard rails
+(player number format, text blocklist, upload moderation, blocklist evasion) that had automated test coverage
+but no recette entry yet.
 
 | File                                  | Content                                                                                                                                                                                                                     |
 |---------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -66,3 +66,5 @@ entry yet.
 | `cust12-blocklist-frontend.png`       | CUST-12: rejection message shown in the 3D configurator for a blocklisted term in the player name field                                                                                                                     |
 | `cust13-backend-tests.png`            | CUST-13: targeted PHPUnit tests (logo/image upload rejected for flagged content), 2 passed (7 assertions)                                                                                                                   |
 | `cust13-moderation-frontend.png`      | CUST-13: rejection message shown in the 3D configurator for an uploaded image containing prohibited visual content (weapons, drugs, hate symbols) - dedicated vision-model check added after this scenario was first closed |
+| `cust14-leetspeak-backend-tests.png`  | CUST-14: `PromptBlocklistTest::test_detects_leetspeak_character_substitution` - blocklist now normalizes common character substitutions (e.g. "H!TLER") before matching                                                     |
+| `cust14-leetspeak-frontend.png`       | CUST-14: rejection message shown in the 3D configurator for a blocklisted term disguised with character substitution                                                                                                        |
