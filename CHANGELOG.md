@@ -5,6 +5,47 @@ submissions) are documented here.
 
 Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v1.0.10] - 2026-07-23
+
+### Added
+
+- Backfilled missing changelog entries for v1.0.7, v1.0.8, and v1.0.9.
+
+## [v1.0.9] - 2026-07-23
+
+### Added
+
+- `README.md`, `docs/02-deployment.md`: documented the required `docker compose restart nginx` step after
+  recreating the backend app container in local dev — nginx caches the old container's IP and returns 502s
+  until restarted.
+
+## [v1.0.8] - 2026-07-22
+
+### Added
+
+- `rendusrncp/FICHES_INCIDENTS.md`: Report 12 (blocklist leetspeak-normalization bypass, missing weapon
+  detection in uploaded images), referenced in Bloc 2 (Exemple 9) and Bloc 4 (incident summary table).
+
+## [v1.0.7] - 2026-07-22
+
+### Added
+
+- `rendusrncp/cahier_recettes.xlsx`: CUST-14 leetspeak scenario, test counts and proofs updated.
+
+### Changed
+
+- Final documentation consolidation pass: `README.md`, all of `docs/`, `RNCP.postman_collection.json`, and
+  several `preuves_recettes/` screenshots refreshed for consistency ahead of submission — no functional change.
+
+### Fixed
+
+- `README.md`: broken repository link in the components table.
+
+### Removed
+
+- `rendusrncp/BLOC2_DOSSIER.docx`: stopped tracking in git (kept locally only, added manually to the submission
+  zip).
+
 ## [v1.0.6] - 2026-07-15
 
 ### Removed
