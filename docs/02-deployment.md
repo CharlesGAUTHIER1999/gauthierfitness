@@ -56,6 +56,7 @@ cp .env.docker.example .env.docker   # DB_HOST=db (Docker service name, not 127.
 docker compose up -d --wait   # waits until MySQL + the app are actually ready (build included on first run, ~2-4 min)
 docker compose exec app php artisan key:generate --show   # copy the displayed key into APP_KEY= in .env.docker
 docker compose up -d --force-recreate app                 # reload the container with the new key
+docker compose restart nginx                               # nginx cached the old container IP — reload it
 docker compose exec app php artisan migrate --seed
 docker compose exec app php artisan storage:link
 
@@ -263,6 +264,17 @@ add_header X-Content-Type-Options "nosniff";
 add_header Referrer-Policy "strict-origin-when-cross-origin";
 add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://js.stripe.com; ...";
 ```
+
+### Local dev: stale upstream IP after container recreation
+
+Nginx (local `docker-compose.yml` and the staging/prod configs alike) proxies to the backend via a static
+hostname (`fastcgi_pass app:9000;` locally, `upstream backend { server backend:9000; }` in staging/prod) with
+no `resolver` directive. Nginx resolves that hostname to a Docker-assigned IP **once, at worker startup**, and
+keeps using it. If the backend container is recreated (e.g. `docker compose up -d --force-recreate app`), it
+gets a new internal IP, but nginx keeps proxying to the old, now-dead one — resulting in a `502 Bad Gateway`
+until nginx itself is restarted (`docker compose restart nginx`). `deploy-staging.sh` and `deploy-prod.sh`
+already restart nginx right after recreating the backend for this exact reason; the local Quick Start does the
+same (see §3 above).
 
 ---
 
